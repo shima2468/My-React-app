@@ -1,31 +1,56 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom"
-import { AuthLayout, SignIn } from "./assets/pages";
-import SignUp from "./assets/pages/Authentication/Signup/SignUp";
-;
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  SignIn,
+  SignUp,
+  Overview,
+  Materials,
+  AITools,
+  SummarizerPage,
+  MindMapsPage,
+  KnowledgeGraphPage,
+  QuizGeneratorPage,
+  FlashcardsPage,
+} from "./assets/pages";
+import { AuthLayout, DashboardLayout, ToolsLayout } from "./assets/Components";
 
-function App() {
-  const router = createBrowserRouter([
-    {
-      path: "/",
-      element: <AuthLayout />,
-      // errorElement: <NotFound />,
-      children: [
-        { index: true, element: <SignIn /> },
-        // Auth routes
-        { path: "login", element: <SignIn /> },
-        { path: "register", element: <SignUp /> },
-      ],
-    },
-  ]);
-  return (
-    <>
-      <RouterProvider router={router} />
-    </>
-  );
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <AuthLayout />,
+    children: [
+      { index: true, element: <SignIn /> },
+      { path: "signIn", element: <SignIn /> },
+      { path: "signUp", element: <SignUp /> },
+    ],
+  },
+  {
+    path: "/dashboard",
+    element: <DashboardLayout />,
+    children: [
+      { index: true, element: <Overview /> },
+      { path: "overview", element: <Overview /> }, 
+      { path: "materials", element: <Materials /> },
+
+      {
+        path: "tools",
+        children: [
+          { index: true, element: <AITools /> },
+          {
+            element: <ToolsLayout />,
+            children: [
+              { path: "summarizer", element: <SummarizerPage /> },
+              { path: "mind-maps", element: <MindMapsPage /> },
+              { path: "knowledge-graph", element: <KnowledgeGraphPage /> },
+              { path: "quiz-generator", element: <QuizGeneratorPage /> },
+              { path: "flashcards", element: <FlashcardsPage /> },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+]);
+
+export default function App() {
+  return <RouterProvider router={router} />;
 }
-
-export default App;

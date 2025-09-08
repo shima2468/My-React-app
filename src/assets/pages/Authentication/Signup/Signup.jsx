@@ -1,7 +1,15 @@
+import { useNavigate } from "react-router-dom";
+
 export default function SignUp() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    navigate("/dashboard");
+  };
+
   return (
-    <form className="space-y-4">
-      {/* Full Name */}
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="name" className="mb-1 block text-sm font-semibold">
           Full Name
@@ -12,10 +20,9 @@ export default function SignUp() {
           type="text"
           placeholder="John Doe"
           className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
+          required
         />
       </div>
-
-      {/* Email */}
       <div>
         <label htmlFor="email" className="mb-1 block text-sm font-semibold">
           Email
@@ -26,10 +33,10 @@ export default function SignUp() {
           type="email"
           placeholder="student@university.edu"
           className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
+          required
         />
       </div>
 
-      {/* Password */}
       <div>
         <label htmlFor="password" className="mb-1 block text-sm font-semibold">
           Password
@@ -39,10 +46,10 @@ export default function SignUp() {
           name="password"
           type="password"
           className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
+          required
         />
       </div>
 
-      {/* Confirm Password (اختياري—احذفيه لو مش محتاجاه) */}
       <div>
         <label htmlFor="confirm" className="mb-1 block text-sm font-semibold">
           Confirm Password
@@ -52,10 +59,9 @@ export default function SignUp() {
           name="confirm"
           type="password"
           className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10"
+          required
         />
       </div>
-
-      {/* Submit */}
       <button
         type="submit"
         className="mt-2 h-11 w-full rounded-xl border border-black bg-black text-sm font-semibold text-white hover:opacity-90"

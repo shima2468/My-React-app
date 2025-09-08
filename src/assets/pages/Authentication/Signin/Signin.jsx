@@ -1,7 +1,14 @@
+import { useNavigate } from "react-router-dom";
+
 export default function SignIn() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    navigate("/dashboard");
+  };
   return (
-    <form className="space-y-4">
-      {/* Email */}
+    <form className="space-y-4" onSubmit={handleSubmit}>
       <div>
         <label htmlFor="email" className="mb-1 block text-sm font-semibold">
           Email
@@ -15,7 +22,6 @@ export default function SignIn() {
         />
       </div>
 
-      {/* Password */}
       <div>
         <label htmlFor="password" className="mb-1 block text-sm font-semibold">
           Password
