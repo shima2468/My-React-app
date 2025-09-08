@@ -1,0 +1,8 @@
+:root {
+  --toastify-color-success: #000;
+  --toastify-color-error: #dc2626; 
+  --toastify-color-warning: #f59e0b; 
+  --toastify-color-info: #0ea5e9;
+  --toastify-color-progress-success: #000;
+  --toastify-color-progress-error: #f87171;
+}

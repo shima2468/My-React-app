@@ -1,3 +1,13 @@
-export { default as AuthLayout } from "./Authentication/AuthLayout/AuthLayout";
+export { default as AuthLayout } from "../Components/Layout/AuthLayout/AuthLayout.jsx";
 export { default as SignIn } from "./Authentication/SignIn/SignIn";
-export { default as signUp } from "./Authentication/Signup/SignUp";
+export { default as SignUp } from "./Authentication/Signup/SignUp";
+export { default as DashboardLayout } from "../Components/Layout/DashboardLayout/DashboardLayout.jsx";
+export { default as Overview } from "./Overview/Overview.jsx";
+export { default as Materials } from "./Materials/Materials.jsx";
+export { default as AITools } from "./AITools/AITools.jsx";
+export { default as ToolsLayout } from "../Components/Layout/ToolsLayout/ToolsLayout.jsx";
+export { default as SummarizerPage } from "./AIToolsPages/SummarizerPage/SummarizerPage.jsx";
+export { default as MindMapsPage } from "./AIToolsPages/MindMapsPage/MindMapsPage.jsx";
+export { default as KnowledgeGraphPage } from "./AIToolsPages/KnowledgeGraphPage/KnowledgeGraphPage.jsx";
+export { default as QuizGeneratorPage } from "./AIToolsPages/QuizGeneratorPage/QuizGeneratorPage.jsx";
+export { default as FlashcardsPage } from "./AIToolsPages/FlashcardsPage/FlashcardsPage.jsx";

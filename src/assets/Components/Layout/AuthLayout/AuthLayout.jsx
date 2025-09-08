@@ -1,8 +1,25 @@
-// src/components/layout/AuthLayout.jsx
-import { Outlet, NavLink, Link } from "react-router-dom";
+import {
+  Outlet,
+  NavLink,
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import { useEffect } from "react";
 import { Brain } from "lucide-react";
 
 export default function AuthLayout() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const isSignIn = pathname.endsWith("/signIn") || pathname === "/signIn";
+    const isSignUp = pathname.endsWith("/signUp") || pathname === "/signUp";
+    if (!isSignIn && !isSignUp) {
+      navigate("/signIn", { replace: true });
+    }
+  }, [pathname, navigate]);
+
   const tabClass = ({ isActive }) =>
     [
       "w-1/2 rounded-xl px-4 py-2 text-center text-sm font-semibold transition",
@@ -13,7 +30,6 @@ export default function AuthLayout() {
 
   return (
     <div className="min-h-dvh bg-gradient-to-b from-sky-50 to-white">
-      {/* Header / Logo */}
       <header className="mx-auto max-w-5xl px-4 pt-14 pb-8 text-center">
         <Link to="/" className="inline-flex flex-col items-center gap-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white">
@@ -28,10 +44,8 @@ export default function AuthLayout() {
         </p>
       </header>
 
-      {/* Auth Card (narrow) */}
       <main className="mx-auto max-w-5xl px-4 pb-16">
         <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
-          {/* Title + description */}
           <h2 className="mb-1 text-center text-2xl font-bold font-serif text-gray-900">
             Welcome Back
           </h2>
@@ -39,13 +53,12 @@ export default function AuthLayout() {
             Sign in to access your study materials and AI tools
           </p>
 
-          {/* Tabs */}
           <div className="mb-5">
-            <div className="flex rounded-xl  bg-[#f9f9f9] p-1">
-              <NavLink to="/login" className={tabClass}>
+            <div className="flex rounded-xl bg-[#f9f9f9] p-1">
+              <NavLink to="/signIn" end className={tabClass}>
                 Sign In
               </NavLink>
-              <NavLink to="/register" className={tabClass}>
+              <NavLink to="/signUp" end className={tabClass}>
                 Sign Up
               </NavLink>
             </div>
