@@ -1,3 +1,6 @@
+export { default as Navbar } from "./Navbar/Navbar.jsx";
+export { default as Header } from "./Header/Header.jsx";
+export { default as TabsHeader } from "./TabsHeader/TabsHeader.jsx";
 export { default as AuthLayout } from "./Layout/AuthLayout/AuthLayout.jsx";
 export { default as ToolsLayout } from "./Layout/ToolsLayout/ToolsLayout.jsx";
 export { default as DashboardLayout } from "./Layout/DashboardLayout/DashboardLayout.jsx";

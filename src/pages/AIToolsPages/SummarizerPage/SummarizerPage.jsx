@@ -6,7 +6,7 @@ import {
   ToolPanel,
   IconButton,
   LoadingOverlay,
-} from "@/assets/Components";
+} from "@/Components";
 
 const DUMMY_MATERIALS = [
   { id: "psy101", name: "Introduction to Psychology.pdf", size: "2.4 MB" },

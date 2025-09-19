@@ -1,6 +1,5 @@
-// src/assets/pages/AItools/AITools.jsx (أو مسارك الحالي)
-import Header from "@/assets/Components/Header/Header";
-import AIStudyTools from "@/assets/Components/AIStudyTools/AIStudyTools";
+import Header from "@/Components/Header/Header";
+import AIStudyTools from "@/Components/AIStudyTools/AIStudyTools";
 
 export default function AITools() {
   return (

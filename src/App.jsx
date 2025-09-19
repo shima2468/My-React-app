@@ -10,8 +10,8 @@ import {
   KnowledgeGraphPage,
   QuizGeneratorPage,
   FlashcardsPage,
-} from "./assets/pages";
-import { AuthLayout, DashboardLayout, ToolsLayout } from "./assets/Components";
+} from "./pages";
+import { AuthLayout, DashboardLayout, ToolsLayout } from "./Components";
 
 const router = createBrowserRouter([
   {
@@ -28,7 +28,7 @@ const router = createBrowserRouter([
     element: <DashboardLayout />,
     children: [
       { index: true, element: <Overview /> },
-      { path: "overview", element: <Overview /> }, 
+      { path: "overview", element: <Overview /> },
       { path: "materials", element: <Materials /> },
 
       {

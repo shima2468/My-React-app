@@ -1,9 +1,9 @@
-import Header from "@/assets/Components/Header/Header.jsx";
-import StatsRow from "@/assets/Components/OverviewComponents/StatsRow/StatsRow";
-import StudyMaterialsUploader from "@/assets/Components/StudyMaterialsUploader/StudyMaterialsUploader";
-import RecentActivity from "@/assets/Components/OverviewComponents/RecentActivity/RecentActivity";
-import StudyGoals from "@/assets/Components/OverviewComponents/StudyGoals/StudyGoals";
-import AIStudyTools from "@/assets/Components/AIStudyTools/AIStudyTools";
+import Header from "@/Components/Header/Header.jsx";
+import StatsRow from "@/Components/OverviewComponents/StatsRow/StatsRow";
+import StudyMaterialsUploader from "@/Components/StudyMaterialsUploader/StudyMaterialsUploader";
+import RecentActivity from "@/Components/OverviewComponents/RecentActivity/RecentActivity";
+import StudyGoals from "@/Components/OverviewComponents/StudyGoals/StudyGoals";
+import AIStudyTools from "@/Components/AIStudyTools/AIStudyTools";
 
 export default function Overview() {
   return (

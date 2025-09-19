@@ -1,7 +1,6 @@
 
-export { default as SignIn } from "./Authentication/SignIn/SignIn";
-export { default as SignUp } from "./Authentication/Signup/SignUp";
-
+export { default as SignIn } from "./Authentication/Signin/Signin.jsx";
+export { default as SignUp } from "./Authentication/Signup/Signup.jsx";
 export { default as Overview } from "./Overview/Overview.jsx";
 export { default as Materials } from "./Materials/Materials.jsx";
 export { default as AITools } from "./AITools/AITools.jsx";

@@ -8,7 +8,7 @@ import {
   FlashcardsGeneratePanel,
   FlashcardsList,
   FlashcardsStudyPage,
-} from "@/assets/Components";
+} from "@/Components";
 
 const MATERIALS = [
   {

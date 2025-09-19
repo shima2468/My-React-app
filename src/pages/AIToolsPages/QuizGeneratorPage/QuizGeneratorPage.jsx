@@ -7,7 +7,7 @@ import {
   Legend,
   LoadingOverlay,
   ToolSidebar,
-} from "@/assets/Components";
+} from "@/Components";
 import { QuizPreview } from "../../../Components";
 
 const MATERIALS = [

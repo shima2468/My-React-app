@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { List, PlusSquare, Plus } from "lucide-react";
-import Header from "@/assets/Components/Header/Header";
-import MaterialsList from "@/assets/Components/MaterialsComponents/MaterialsList/MaterialsList";
+import Header from "@/Components/Header/Header";
+import MaterialsList from "@/Components/MaterialsComponents/MaterialsList/MaterialsList";
 import StudyMaterialsUploader from "../../Components/StudyMaterialsUploader/StudyMaterialsUploader";
 
 const btn =
