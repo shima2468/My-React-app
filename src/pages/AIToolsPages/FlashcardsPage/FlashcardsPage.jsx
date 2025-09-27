@@ -25,7 +25,6 @@ const MATERIALS = [
   },
 ];
 
-// مولد بسيط تجريبي
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const TERMS = {
   definition: [
@@ -73,7 +72,7 @@ function fakeGenerate({ count, type, difficulty }) {
 }
 
 export default function FlashcardsPage() {
-  // ----------------- State -----------------
+
   const [materialId, setMaterialId] = useState(MATERIALS[0].id);
   const [difficulty, setDifficulty] = useState("medium");
   const [type, setType] = useState("definition");
@@ -81,9 +80,8 @@ export default function FlashcardsPage() {
   const [loading, setLoading] = useState(false);
 
   const [deck, setDeck] = useState([]);
-  const [view, setView] = useState("form"); // "form" | "list" | "study"
+  const [view, setView] = useState("form"); 
 
-  // ----------------- Actions -----------------
   const runGenerate = async () => {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 300));
@@ -107,7 +105,6 @@ export default function FlashcardsPage() {
     URL.revokeObjectURL(url);
   };
 
-  // ----------------- UI -----------------
   return (
     <div className="grid grid-cols-1 gap-6">
       <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
@@ -140,10 +137,9 @@ export default function FlashcardsPage() {
             </>
           }
         >
-          <LoadingOverlay show={loading} text="Generating your flashcards…" />
+        <LoadingOverlay show={loading} text="Generating your flashcards…" />
 
           <div className="p-6">
-            {/* FORM */}
             {view === "form" && (
               <FlashcardsGeneratePanel
                 materials={MATERIALS}
@@ -159,7 +155,6 @@ export default function FlashcardsPage() {
               />
             )}
 
-            {/* LIST */}
             {view === "list" && (
               <FlashcardsList
                 deck={deck}
@@ -168,7 +163,6 @@ export default function FlashcardsPage() {
               />
             )}
 
-            {/* STUDY */}
             {view === "study" && (
               <FlashcardsStudyPage
                 deck={deck}

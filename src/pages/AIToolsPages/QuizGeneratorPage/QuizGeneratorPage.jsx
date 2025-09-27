@@ -201,7 +201,6 @@ export default function QuizGeneratorPage() {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6">
-      {/* LEFT: ToolSidebar */}
       <div className="space-y-4">
         <ToolSidebar
           loading={loading}
@@ -230,7 +229,6 @@ export default function QuizGeneratorPage() {
           }}
         />
 
-        {/* Number of Questions */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <h4 className="text-lg font-serif font-semibold text-slate-900">
             Quiz Settings
@@ -253,8 +251,6 @@ export default function QuizGeneratorPage() {
           </div>
         </div>
       </div>
-
-      {/* RIGHT: ToolPanel + Preview فقط */}
       <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         <ToolPanel
           title="Quiz Generator"

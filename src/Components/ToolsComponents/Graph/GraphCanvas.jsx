@@ -1,17 +1,81 @@
+
 import React, {
-  useEffect,
   useMemo,
   useRef,
-  useState,
   forwardRef,
   useImperativeHandle,
+  useEffect,
+  useState,
 } from "react";
+import ReactECharts from "echarts-for-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const DEFAULT_SIZE = { w: 880, h: 460 };
+const DEFAULT_SIZE = { w: 1200, h: 560 };
 
-const R = { root: 35, concept: 30, entity: 30, relation: 22 };
-const getR = (t) =>
-  t === "root" ? R.root : t === "concept" ? R.concept : t === "entity" ? R.entity : R.relation;
+
+const DEFAULT_COLORS = {
+  root: "#111827", 
+  concept: "#374151",
+  entity: "#9CA3AF", 
+  relation: "#6B7280", 
+  edgeNeutral: "#CBD5E1", 
+};
+
+
+export const GRAPH_COLORS = DEFAULT_COLORS;
+
+
+const H = { root: 66, concept: 48, entity: 44, relation: 42 };
+
+
+const FONT_SCALE = 0.9;
+
+
+const LABEL = {
+  base: 13,
+  scale: 1.0, 
+  hierScale: 0.9, 
+  byType: { root: 1.35, concept: 1.12, entity: 1.0, relation: 1.0 },
+  min: 12,
+  max: 34,
+};
+
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+
+const labelPx = (type, k, isHier) =>
+  clamp(
+    Math.round(
+      LABEL.base *
+        (isHier ? LABEL.hierScale : LABEL.scale) *
+        (LABEL.byType[type] ?? 1) *
+        k
+    ),
+    LABEL.min,
+    LABEL.max
+  );
+
+
+const HIER_STYLE = {
+  nodeGap: 80, 
+  layerGap: 400,
+  labelMin: LABEL.min,
+  borderWidth: 2,
+  shadowBlur: 10,
+  siblingSpacer: 220,
+};
+
+
+const short = (s, n = 20) => (s?.length > n ? s.slice(0, n - 1) + "..." : s);
+
+function normalizeLayout(v = "") {
+  const s = String(v).toLowerCase().trim();
+  if (["force", "force-directed", "forced", "cose", "fd"].includes(s))
+    return "force";
+  if (["circular", "circle", "radial"].includes(s)) return "circular";
+  if (["hier", "hierarchical", "tree"].includes(s)) return "hierarchical";
+  return "force";
+}
+
 
 function sampleGraph(materialId) {
   if (materialId === "bio") {
@@ -29,8 +93,8 @@ function sampleGraph(materialId) {
         { id: "Ecosystems", type: "entity" },
         { id: "Food Chain", type: "entity" },
         { id: "Adaptation", type: "entity" },
-        { id: "Natural Sel.", type: "entity" },
-        { id: "Research M.", type: "relation" },
+        { id: "Natural Selection", type: "entity" },
+        { id: "Research Methods", type: "relation" },
       ],
       links: [
         ["Biology", "Genetics"],
@@ -44,12 +108,11 @@ function sampleGraph(materialId) {
         ["Ecology", "Ecosystems"],
         ["Ecology", "Food Chain"],
         ["Evolution", "Adaptation"],
-        ["Evolution", "Natural Sel."],
-        ["Biology", "Research M."],
+        ["Evolution", "Natural Selection"],
+        ["Biology", "Research Methods"],
       ].map(([source, target]) => ({ source, target })),
     };
   }
-
   return {
     nodes: [
       { id: "Psychology", type: "root" },
@@ -57,453 +120,792 @@ function sampleGraph(materialId) {
       { id: "Behavior", type: "concept" },
       { id: "Development", type: "concept" },
       { id: "Mental Health", type: "concept" },
+      { id: "Social Behavior", type: "concept" },
+      { id: "Research Methods", type: "relation" },
       { id: "Perception", type: "entity" },
       { id: "Memory", type: "entity" },
       { id: "Attention", type: "entity" },
-      { id: "Learning T.", type: "entity" },
-      { id: "Reinforcement", type: "entity" },
+      { id: "Learning Theories", type: "entity" },
       { id: "Conditioning", type: "entity" },
+      { id: "Attachment", type: "entity" },
       { id: "Anxiety", type: "entity" },
       { id: "Depression", type: "entity" },
-      { id: "Social Beh.", type: "concept" },
-      { id: "Social Inf.", type: "entity" },
-      { id: "Conformity", type: "entity" },
-      { id: "Group Dyn.", type: "entity" },
-      { id: "Research M.", type: "relation" },
-      { id: "Experiment", type: "relation" },
-      { id: "Statistics", type: "relation" },
       { id: "Brain", type: "entity" },
       { id: "Neurons", type: "entity" },
-      { id: "Piaget", type: "entity" },
-      { id: "Attachment", type: "entity" },
+      { id: "Conformity", type: "entity" },
+      { id: "Experiment", type: "relation" },
+      { id: "Statistics", type: "relation" },
     ],
     links: [
       ["Psychology", "Cognition"],
       ["Psychology", "Behavior"],
       ["Psychology", "Development"],
       ["Psychology", "Mental Health"],
-      ["Psychology", "Social Beh."],
-      ["Psychology", "Research M."],
-      ["Research M.", "Experiment"],
-      ["Research M.", "Statistics"],
+      ["Psychology", "Social Behavior"],
+      ["Psychology", "Research Methods"],
       ["Cognition", "Perception"],
       ["Cognition", "Memory"],
-      ["Cognition", "Attention"],
-      ["Behavior", "Learning T."],
-      ["Behavior", "Reinforcement"],
+      ["Behavior", "Learning Theories"],
       ["Behavior", "Conditioning"],
+      ["Development", "Attachment"],
       ["Mental Health", "Anxiety"],
       ["Mental Health", "Depression"],
-      ["Social Beh.", "Social Inf."],
-      ["Social Beh.", "Conformity"],
-      ["Social Beh.", "Group Dyn."],
-      ["Development", "Piaget"],
-      ["Development", "Attachment"],
       ["Mental Health", "Brain"],
       ["Brain", "Neurons"],
+      ["Social Behavior", "Conformity"],
+      ["Research Methods", "Experiment"],
+      ["Research Methods", "Statistics"],
     ].map(([source, target]) => ({ source, target })),
   };
 }
 
-/* ===== Helpers / Layouts ===== */
-const byId = (arr = []) => Object.fromEntries(arr.map((n) => [n.id, n]));
+// ===== Helpers =====
+const colorForType = (t, palette) =>
+  t === "root"
+    ? palette.root
+    : t === "concept"
+    ? palette.concept
+    : t === "entity"
+    ? palette.entity
+    : palette.relation;
 
-function layoutCircular(g = { nodes: [], links: [] }, w, h) {
-  const nodes = (g.nodes ?? []).map((n) => ({ ...n }));
-  const links = (g.links ?? []).map((l) => ({ ...l }));
+const labelColorForType = (t) => (t === "entity" ? "#0f172a" : "#ffffff");
 
-  const cx = w / 2,
-    cy = h / 2;
-  const root = nodes.find((n) => n.type === "root");
-  if (root) {
-    root.x = cx;
-    root.y = cy;
-  }
 
-  const others = nodes.filter((n) => n !== root);
-  const r = Math.min(w, h) * 0.32;
-  others.forEach((n, i) => {
-    const angle = (i / Math.max(1, others.length)) * Math.PI * 2;
-    n.x = cx + r * Math.cos(angle);
-    n.y = cy + r * Math.sin(angle);
-  });
+function boxSizeByType(name = "", type = "entity", mode = "generic", k = 1) {
 
-  return { nodes, links };
+  const per =
+    mode === "hier"
+      ? type === "root"
+        ? 9.2
+        : type === "concept"
+        ? 8.6
+        : 8.0
+      : 8.0;
+
+  const pad =
+    mode === "hier"
+      ? type === "root"
+        ? 28
+        : type === "concept"
+        ? 26
+        : 34
+      : 20;
+
+  const bounds =
+    mode === "hier"
+      ? {
+          root: [100, 180],
+          concept: [40, 100],
+          entity: [10, 70],
+          relation: [60, 90],
+        }
+      : {
+
+          root: [140, 200],
+          concept: [110, 170],
+          entity: [110, 160],
+          relation: [110, 160],
+        };
+
+  const [minW, maxW] = bounds[type] || [96, 128];
+  const w = clamp(((name?.length || 0) * per + pad) * k, minW * k, maxW * k);
+
+  const baseH =
+    type === "root"
+      ? H.root
+      : type === "concept"
+      ? H.concept
+      : type === "relation"
+      ? H.relation
+      : H.entity;
+
+  const h = Math.round((mode === "hier" ? baseH * 1.08 : baseH) * k);
+  return [Math.round(w), h];
 }
 
-function layoutHierarchicalSmart(g = { nodes: [], links: [] }, w, h) {
-  const nodes = (g.nodes ?? []).map((n) => ({ ...n }));
-  const links = (g.links ?? []).map((l) => ({ ...l }));
-  const map = byId(nodes);
 
-  const marginTop = 40,
-    marginBot = 40;
-  const topY = marginTop,
-    botY = h - marginBot;
+function toTreeData(graph, colors, trim = true, k = 1) {
+  const palette = colors || DEFAULT_COLORS;
+  const byId = Object.fromEntries(
+    (graph.nodes || []).map((n) => [n.id, { ...n, children: [] }])
+  );
+  (graph.links || []).forEach((l) => {
+    if (byId[l.source] && byId[l.target])
+      byId[l.source].children.push(byId[l.target]);
+  });
+  const root =
+    (graph.nodes || []).find((n) => n.type === "root") ||
+    (graph.nodes || [])[0];
 
-  const leftX = 120;
-  const midX = Math.round(w * 0.4);
-  const rightX = w - 140;
 
-  const adj = {};
-  for (const l of links) {
-    adj[l.source] = adj[l.source] || new Set();
-    adj[l.target] = adj[l.target] || new Set();
-    adj[l.source].add(l.target);
-    adj[l.target].add(l.source);
-  }
-
-  const root = nodes.find((n) => n.type === "root");
-  if (root) {
-    root.x = midX;
-    root.y = h / 2;
-  }
-
-  const concepts = nodes.filter((n) => n.type === "concept");
-  const others = nodes.filter((n) => n.type !== "concept" && n.type !== "root");
-
-  const gapC = Math.max(R.concept * 3.0, 100);
-  const firstY = Math.max(topY, (h - gapC * (Math.max(1, concepts.length) - 1)) / 2);
-
-  concepts.forEach((n, i) => {
-    n.x = leftX;
-    n.y = Math.min(botY, firstY + i * gapC);
+  const makeSpacer = () => ({
+    name: " ", 
+    value: 0.0001,
+    type: "spacer",
+    symbol: "roundRect",
+    symbolSize: [1, 1],
+    itemStyle: {
+      color: "transparent",
+      borderColor: "transparent",
+      borderWidth: 0,
+    },
+    label: {
+      show: true,
+      position: "inside",
+      width: Math.max(10, HIER_STYLE.siblingSpacer * k),
+      color: "rgba(0,0,0,0)",
+      backgroundColor: "transparent",
+      overflow: "truncate",
+      ellipsis: "...",
+    },
+    lineStyle: { opacity: 0 },
+    children: [],
   });
 
-  const childGap = Math.max(R.entity * 2 + 14, 54);
-  const minGap = Math.max(R.entity * 2 + 6, 46);
+  const mapNode = (n) => {
+    const name = trim ? short(n.id) : n.id;
+    const type = n.type || "entity";
+    const [bw, bh] = boxSizeByType(name, type, "hier", k);
 
-  const proposals = [];
-  const seen = new Set();
+    const node = {
+      name,
+      value: 1,
+      type,
+      symbol: "roundRect",
+      symbolSize: [bw, bh],
+      itemStyle: {
+        color: colorForType(type, palette),
+        borderColor: "#ffffff",
+        borderWidth: HIER_STYLE.borderWidth,
+        shadowBlur: HIER_STYLE.shadowBlur,
+        shadowColor: "rgba(15,23,42,0.14)",
+      },
+      label: {
+        show: true,
+        position: "inside",
+        color: labelColorForType(type),
+        fontWeight: type === "root" ? 800 : type === "concept" ? 700 : 600,
 
-  for (const c of concepts) {
-    const neigh = Array.from(adj[c.id] || []);
-    const kids = neigh
-      .map((id) => map[id])
-      .filter((n) => n && n.type !== "root" && n.type !== "concept");
+        fontSize: labelPx(type, k, true),
 
-    if (!kids.length) continue;
+        overflow: "truncate",
+        ellipsis: "...",
 
-    const center = (kids.length - 1) / 2;
-    kids.forEach((k, j) => {
-      const yWant = c.y + (j - center) * childGap;
-      proposals.push({ id: k.id, yWant, groupCenter: c.y });
-    });
-  }
+        width: Math.max(48, Math.min(bw - 10, 200)),
+        align: "center",
+        verticalAlign: "middle",
+      },
+      lineStyle: { color: palette.edgeNeutral },
+      children: [],
+    };
 
-  if (root) {
-    const rootKids = Array.from(adj[root.id] || [])
-      .map((id) => map[id])
-      .filter((n) => n && n.type !== "concept" && n.id !== root.id);
-    rootKids.forEach((rk, idx) => {
-      proposals.push({
-        id: rk.id,
-        yWant: firstY + idx * childGap * 0.8,
-        groupCenter: h / 2,
-      });
-    });
-  }
 
-  proposals.sort((a, b) => a.yWant - b.yWant);
-  let nextY = topY;
-  for (const p of proposals) {
-    if (seen.has(p.id)) continue;
-    const n = map[p.id];
-    if (!n) continue;
-    n.x = rightX;
-    n.y = Math.min(botY, Math.max(p.yWant, nextY));
-    nextY = n.y + minGap;
-    seen.add(n.id);
-  }
+    const kids = (n.children || []).map(mapNode);
 
-  for (const n of others) {
-    if (seen.has(n.id)) continue;
-    n.x = rightX;
-    n.y = Math.min(botY, nextY);
-    nextY = n.y + minGap;
-    seen.add(n.id);
-  }
 
-  return { nodes, links };
+    const withSpacers = [];
+    for (let i = 0; i < kids.length; i++) {
+      withSpacers.push(kids[i]);
+      if (i < kids.length - 1) withSpacers.push(makeSpacer());
+    }
+    node.children = withSpacers;
+
+    return node;
+  };
+
+  return [mapNode(byId[root?.id] || root)];
 }
 
-function layoutForce(g = { nodes: [], links: [] }, w, h, steps = 220) {
-  const nodes = (g.nodes ?? []).map((n) => ({
-    ...n,
-    x: n.x ?? Math.random() * w,
-    y: n.y ?? Math.random() * h,
-    vx: 0,
-    vy: 0,
+
+function toGraphData(graph, colors, trim, { layout }, k = 1) {
+  const palette = colors || DEFAULT_COLORS;
+  const nodes = (graph.nodes || []).map((n) => {
+    const raw = trim ? short(n.id) : n.id;
+    const type = n.type || "entity";
+
+    const [gw, gh] = boxSizeByType(raw, type, "generic", k);
+
+    return {
+      id: n.id,
+      name: raw,
+      category: type,
+      symbol: "roundRect",
+      symbolKeepAspect: true,
+      symbolSize: [gw, gh],
+      label: {
+        show: true,
+        position: "inside",
+        color: labelColorForType(type),
+        fontWeight: type === "root" ? 700 : type === "concept" ? 600 : 500,
+        fontSize: labelPx(type, k, false),
+        overflow: "truncate",
+        ellipsis: "...",
+        width: Math.max(56, Math.min(gw - 10, 220)),
+        align: "center",
+        verticalAlign: "middle",
+      },
+      itemStyle: {
+        color: colorForType(type, palette),
+        borderColor: "#ffffff",
+        borderWidth: 2,
+        shadowBlur: 6,
+        shadowColor: "rgba(15,23,42,0.10)",
+      },
+      draggable: true,
+      value: 1,
+    };
+  });
+
+  const links = (graph.links || []).map((l) => ({
+    source: l.source,
+    target: l.target,
+    lineStyle: {
+      width: clamp(1.2 * k, 1.1, 2.2),
+      opacity: 0.95,
+      curveness: layout === "force" ? 0.15 : 0.2,
+      color: (colors && colors.edgeNeutral) || DEFAULT_COLORS.edgeNeutral,
+    },
+    symbol: ["none", "arrow"],
+    symbolSize: 7 * k,
   }));
-  const links = (g.links ?? []).map((l) => ({ ...l }));
 
-  const kLink = 0.03;
-  const rest = 140;
-  const repulse = 4000;
-  const damping = 0.9;
-
-  const dict = byId(nodes);
-
-  for (let s = 0; s < steps; s++) {
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i],
-          b = nodes[j];
-        let dx = a.x - b.x,
-          dy = a.y - b.y;
-        let d2 = dx * dx + dy * dy + 0.01;
-        const f = repulse / d2;
-        const invd = 1 / Math.sqrt(d2);
-        const fx = dx * invd * f,
-          fy = dy * invd * f;
-        a.vx += fx;
-        a.vy += fy;
-        b.vx -= fx;
-        b.vy -= fy;
-      }
-    }
-    for (const l of links) {
-      const a = dict[l.source],
-        b = dict[l.target];
-      if (!a || !b) continue;
-      const dx = b.x - a.x,
-        dy = b.y - a.y;
-      const d = Math.sqrt(dx * dx + dy * dy) || 0.001;
-      const diff = (d - rest) * kLink;
-      const fx = (dx / d) * diff,
-        fy = (dy / d) * diff;
-      a.vx += fx;
-      a.vy += fy;
-      b.vx -= fx;
-      b.vy -= fy;
-    }
-    for (const n of nodes) {
-      if (n.type === "root") {
-        n.vx += (w / 2 - n.x) * 0.02;
-        n.vy += (h / 2 - n.y) * 0.02;
-      }
-      n.x += (n.vx *= damping);
-      n.y += (n.vy *= damping);
-      n.x = Math.max(60, Math.min(w - 60, n.x));
-      n.y = Math.max(60, Math.min(h - 60, n.y));
-    }
-  }
   return { nodes, links };
 }
 
-/* ===== The Component ===== */
+
+function computeScaleFactor(vw, vh, nodeCount) {
+  const minDim = Math.max(320, Math.min(vw, vh));
+  const base = clamp(minDim / 900, 0.78, 1.25);
+  const density = clamp(18 / Math.max(10, nodeCount), 0.75, 1.15);
+  return clamp(base * density, 0.7, 1.2);
+}
+
+function sortForCircle(nodes) {
+  const rank = (t) =>
+    t === "root" ? 0 : t === "concept" ? 1 : t === "entity" ? 2 : 3;
+
+  return [...nodes].sort((a, b) => {
+    const ra = rank(a.category),
+      rb = rank(b.category);
+    if (ra !== rb) return ra - rb;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+}
+
+
+function placeCircular(nodes, w, h, padL, padR, padT, padB) {
+  const areaW = Math.max(1, w - padL - padR);
+  const areaH = Math.max(1, h - padT - padB);
+  const cx = padL + areaW / 2;
+  const cy = padT + areaH / 2;
+
+  const ordered = sortForCircle(nodes);
+  const N = ordered.length || 1;
+
+  const avgW =
+    ordered.reduce(
+      (s, n) => s + (Array.isArray(n.symbolSize) ? n.symbolSize[0] : 40),
+      0
+    ) / N;
+
+  const needR = ((avgW + 10) * N) / (2 * Math.PI);
+  const maxR = Math.max(60, Math.min(areaW, areaH) / 2);
+  const R = clamp(needR * 1.2, 80, maxR * 0.95);
+
+  const start = -Math.PI / 2; 
+  return ordered.map((n, i) => {
+    const th = start + (i * 2 * Math.PI) / N;
+    return { ...n, x: cx + R * Math.cos(th), y: cy + R * Math.sin(th) };
+  });
+}
+
+
+function fitGraphToView(chart) {
+  try {
+    const series = chart.getModel().getSeriesByIndex(0);
+    if (!series) return;
+    const data = series.getData();
+    const xDim = data.getDimensionIndex("x");
+    const yDim = data.getDimensionIndex("y");
+    const pts = [];
+    for (let i = 0; i < data.count(); i++) {
+      const x = data.get(xDim, i),
+        y = data.get(yDim, i);
+      if (Number.isFinite(x) && Number.isFinite(y)) pts.push([x, y]);
+    }
+    if (pts.length < 2) return;
+
+    const xs = pts.map((p) => p[0]),
+      ys = pts.map((p) => p[1]);
+    const minX = Math.min(...xs),
+      maxX = Math.max(...xs);
+    const minY = Math.min(...ys),
+      maxY = Math.max(...ys);
+
+    const width = chart.getWidth(),
+      height = chart.getHeight();
+    const padding = 90;
+    const w = Math.max(1, maxX - minX),
+      h = Math.max(1, maxY - minY);
+    const scaleX = (width - padding) / w;
+    const scaleY = (height - padding) / h;
+    const zoom = Math.min(scaleX, scaleY) * 0.9;
+
+    chart.dispatchAction({
+      type: "graphRoam",
+      zoom,
+      origin: [width / 2, height / 2],
+    });
+
+    const cx = (minX + maxX) / 2,
+      cy = (minY + maxY) / 2;
+    const [px, py] = chart.convertToPixel({ seriesIndex: 0 }, [cx, cy]);
+    chart.dispatchAction({
+      type: "graphRoam",
+      dx: width / 2 - px,
+      dy: height / 2 - py,
+    });
+  } catch {
+
+  }
+}
+
+
 const GraphCanvas = forwardRef(function GraphCanvas(
   {
     size = DEFAULT_SIZE,
-    colors = {
-      concept: "#06B6D4",
-      entity: "#F59E0B",
-      relation: "#EF4444",
-      root: "#3B82F6",
-    },
-    materialId,
-    layout = "hier", // "force" | "circular" | "hier"
-    filter = "All",  // "All" | "Concepts" | "Entities" | "Relationships"
-    onCounts,        // (counts) => void
-    onVisibleCount,  // (n) => void
+    materialId = "bio",
+    layout = "hierarchical",
+    filter = "All",
+    colors = DEFAULT_COLORS,
+    trimLabels = true,
+    stagePadding = 0.12,
+    viewportScale = 0.58,
+    onCounts,
+    onVisibleCount,
   },
   ref
 ) {
-  const wrapRef = useRef(null);
-
-  // الرسم الخام
-  const [rawGraph, setRawGraph] = useState(() => sampleGraph(materialId));
-
-  // transform
-  const [scale, setScale] = useState(1);
-  const [tx, setTx] = useState(0);
-  const [ty, setTy] = useState(0);
-
-  // initialize / when material changes
-  useEffect(() => {
-    setRawGraph(sampleGraph(materialId));
-    setScale(1);
-    setTx(0);
-    setTy(0);
-  }, [materialId]);
-
-  // layouts
-  const laid = useMemo(() => {
-    const g = rawGraph || { nodes: [], links: [] };
-    if (layout === "circular") return layoutCircular(g, size.w, size.h);
-    if (layout === "hier") return layoutHierarchicalSmart(g, size.w, size.h);
-    return layoutForce(g, size.w, size.h, 220);
-  }, [rawGraph, layout, size.w, size.h]);
-
-  // counts
-  const counts = useMemo(() => {
-    const nodes = laid.nodes || [];
-    const total = nodes.length;
-    const Concepts = nodes.filter((n) => n.type === "concept").length;
-    const Entities = nodes.filter((n) => n.type === "entity").length;
-    const Relationships = nodes.filter((n) => n.type === "relation").length;
-    return { All: total, Concepts, Entities, Relationships };
-  }, [laid]);
+  const rawGraph = useMemo(() => sampleGraph(materialId), [materialId]);
+  const [isReady, setIsReady] = useState(false);
+  const [vp, setVp] = useState({ w: 1200, h: size?.h ?? DEFAULT_SIZE.h });
 
   useEffect(() => {
-    onCounts && onCounts(counts);
-  }, [counts, onCounts]);
+    const nodes = rawGraph.nodes || [];
+    onCounts?.({
+      All: nodes.length,
+      Concepts: nodes.filter((n) => n.type === "concept").length,
+      Entities: nodes.filter((n) => n.type === "entity").length,
+      Relationships: nodes.filter((n) => n.type === "relation").length,
+    });
+  }, [rawGraph, onCounts]);
 
-  // filter
+
   const filtered = useMemo(() => {
-    const g = laid || { nodes: [], links: [] };
-    if (filter === "All") return g;
-    const t = filter === "Concepts" ? "concept" : filter === "Entities" ? "entity" : "relation";
+    if (filter === "All") return rawGraph;
+    const t =
+      filter === "Concepts"
+        ? "concept"
+        : filter === "Entities"
+        ? "entity"
+        : "relation";
     const keep = new Set(
-      (g.nodes || [])
-        .filter(
-          (n) => n.type === "root" || n.type === t || (t === "relation" && n.type === "relation")
-        )
+      (rawGraph.nodes || [])
+        .filter((n) => n.type === "root" || n.type === t)
         .map((n) => n.id)
     );
-    const nodes = (g.nodes || []).filter((n) => keep.has(n.id));
-    const links = (g.links || []).filter((l) => keep.has(l.source) && keep.has(l.target));
-    return { nodes, links };
-  }, [laid, filter]);
+    return {
+      nodes: (rawGraph.nodes || []).filter((n) => keep.has(n.id)),
+      links: (rawGraph.links || []).filter(
+        (l) => keep.has(l.source) && keep.has(l.target)
+      ),
+    };
+  }, [rawGraph, filter]);
+
+  useEffect(
+    () => onVisibleCount?.((filtered.nodes || []).length),
+    [filtered, onVisibleCount]
+  );
+
+  const L = normalizeLayout(layout);
+
+
+  const padL = stagePadding * vp.w;
+  const padR = stagePadding * vp.w;
+  const padT = stagePadding * vp.h;
+  const padB = stagePadding * vp.h;
+  const pxTop = Math.round(padT);
+  const pxLeft = Math.round(padL);
+  const pxRight = Math.round(padR);
+  const pxBottom = Math.round(padB + (L === "hierarchical" ? vp.h * 0.06 : 0));
+  const padPct = `${Math.round(
+    Math.max(0, Math.min(0.49, stagePadding)) * 100
+  )}%`;
+
+
+  const k = useMemo(
+    () =>
+      computeScaleFactor(
+        vp.w - padL - padR,
+        vp.h - padT - padB,
+        (filtered.nodes || []).length
+      ),
+    [vp, filtered, padL, padR, padT, padB]
+  );
+
+
+  const option = useMemo(() => {
+    if (L === "hierarchical") {
+      const kHier = Math.max(0.85, k);
+      return {
+        backgroundColor: "#f8fafc",
+        tooltip: { trigger: "item" },
+        series: [
+          {
+            id: "main",
+            type: "tree",
+            data: toTreeData(filtered, colors, trimLabels, kHier),
+            layout: "orthogonal",
+            orient: "TB",
+            roam: true,
+
+            top: pxTop,
+            left: pxLeft,
+            right: pxRight,
+            bottom: pxBottom,
+
+            nodeGap: HIER_STYLE.nodeGap,
+            layerGap: HIER_STYLE.layerGap,
+
+            symbol: "roundRect",
+            symbolKeepAspect: true,
+            edgeShape: "polyline",
+            edgeForkPosition: "65%",
+            lineStyle: {
+              width: clamp(1.8 * kHier, 1.4, 2.6),
+              opacity: 0.95,
+              color: colors.edgeNeutral || DEFAULT_COLORS.edgeNeutral,
+            },
+            labelLayout: { hideOverlap: false, moveOverlap: "shiftX" },
+
+            emphasis: {
+              focus: "ancestor",
+              blurScope: "series",
+              lineStyle: { width: clamp(3.2 * kHier, 2.4, 4.2) },
+              itemStyle: { shadowBlur: 14, shadowColor: "rgba(15,23,42,0.22)" },
+            },
+            selectedMode: "single",
+            select: {
+              lineStyle: {
+                width: clamp(3.8 * kHier, 2.8, 4.8),
+                opacity: 1,
+                shadowBlur: 10,
+                shadowColor: "rgba(15,23,42,0.25)",
+              },
+              label: { fontWeight: 800 },
+            },
+            blur: {
+              itemStyle: { opacity: 0.22 },
+              label: { opacity: 0.55 },
+              lineStyle: { opacity: 0.28 },
+            },
+            expandAndCollapse: false,
+            initialTreeDepth: -1,
+            animationDuration: 420,
+            animationDurationUpdate: 650,
+            animationEasing: "cubicInOut",
+            animationEasingUpdate: "cubicInOut",
+            universalTransition: true,
+            progressive: 1000,
+            progressiveThreshold: 2000,
+          },
+        ],
+      };
+    }
+
+
+    const kForNodes = L === "force" ? k * 0.85 : k;
+    const base = toGraphData(
+      filtered,
+      colors,
+      trimLabels,
+      { layout: L },
+      kForNodes
+    );
+
+    if (L === "circular") {
+      const nodesPos = placeCircular(
+        base.nodes,
+        vp.w,
+        vp.h,
+        padL,
+        padR,
+        padT,
+        padB
+      );
+      return {
+        backgroundColor: "#f8fafc",
+        tooltip: { trigger: "item" },
+        series: [
+          {
+            id: "main",
+            type: "graph",
+            layout: "none",
+            data: nodesPos,
+            links: base.links,
+            roam: true,
+            scaleLimit: { min: 0.05, max: 2.4 },
+            selectedMode: "single",
+            focusNodeAdjacency: true,
+            emphasis: { focus: "adjacency", blurScope: "series" },
+            blur: {
+              itemStyle: { opacity: 0.12 },
+              lineStyle: { opacity: 0.12 },
+            },
+            animationDuration: 450,
+            animationDurationUpdate: 650,
+            animationEasing: "cubicInOut",
+            animationEasingUpdate: "cubicInOut",
+            universalTransition: true,
+          },
+        ],
+      };
+    }
+
+
+    return {
+      backgroundColor: "#f8fafc",
+      tooltip: { trigger: "item" },
+      series: [
+        {
+          id: "main",
+          type: "graph",
+          layout: "force",
+          initLayout: "circular",
+          data: base.nodes,
+          links: base.links,
+          roam: true,
+          top: padPct,
+          left: padPct,
+          right: padPct,
+          bottom: padPct,
+          scaleLimit: { min: 0.05, max: 2.4 },
+          selectedMode: "single",
+          edgeSymbol: ["none", "arrow"],
+          edgeSymbolSize: 7 * kForNodes,
+          focusNodeAdjacency: true,
+          emphasis: { focus: "adjacency", blurScope: "series" },
+          blur: { itemStyle: { opacity: 0.12 }, lineStyle: { opacity: 0.12 } },
+          force: {
+            edgeLength: [60, 120],
+            repulsion: 200,
+            gravity: 0.06,
+            friction: 0.6,
+          },
+          animationDuration: 450,
+          animationDurationUpdate: 650,
+          animationEasing: "cubicInOut",
+          animationEasingUpdate: "cubicInOut",
+          universalTransition: true,
+          progressive: 1000,
+          progressiveThreshold: 2000,
+        },
+      ],
+    };
+  }, [
+    L,
+    filtered,
+    colors,
+    trimLabels,
+    padPct,
+    k,
+    vp,
+    padL,
+    padR,
+    padT,
+    padB,
+    pxTop,
+    pxLeft,
+    pxRight,
+    pxBottom,
+  ]);
+
+  const chartRef = useRef(null);
+  const containerRef = useRef(null);
+  const timersRef = useRef([]);
+
+  const onChartReady = (chart) => {
+    chartRef.current = chart;
+    const t1 = setTimeout(() => {
+      fitGraphToView(chart);
+      const t2 = setTimeout(() => setIsReady(true), 60);
+      timersRef.current.push(t2);
+    }, 0);
+    timersRef.current.push(t1);
+  };
 
   useEffect(() => {
-    onVisibleCount && onVisibleCount((filtered.nodes || []).length);
-  }, [filtered, onVisibleCount]);
+    const t1 = setTimeout(
+      () => chartRef.current && fitGraphToView(chartRef.current),
+      0
+    );
+    const t2 = setTimeout(
+      () => chartRef.current && fitGraphToView(chartRef.current),
+      150
+    );
+    timersRef.current.push(t1, t2);
+    return () => {};
+  }, [layout, filter, stagePadding, k, vp]);
 
-  // dragging
-  const dragging = useRef(null);
-  const onMouseDown = (id, e) => {
-    dragging.current = { id, ox: e.clientX, oy: e.clientY };
-  };
-  const onMouseMove = (e) => {
-    if (!dragging.current) return;
-    const { id, ox, oy } = dragging.current;
-    const dx = (e.clientX - ox) / scale;
-    const dy = (e.clientY - oy) / scale;
-    const n = (filtered.nodes || []).find((x) => x.id === id);
-    if (n) {
-      n.x += dx;
-      n.y += dy;
-      dragging.current.ox = e.clientX;
-      dragging.current.oy = e.clientY;
-    }
-  };
-  const onMouseUp = () => (dragging.current = null);
-
-  // imperative API
-  useImperativeHandle(ref, () => ({
-    zoomIn: () => setScale((s) => Math.min(2.2, s + 0.15)),
-    zoomOut: () => setScale((s) => Math.max(0.6, s - 0.15)),
-    resetView: () => {
-      setScale(1);
-      setTx(0);
-      setTy(0);
-    },
-    toggleFullscreen: () => {
-      const el = wrapRef.current;
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      const el = entries[0]?.target;
       if (!el) return;
-      if (!document.fullscreenElement) el.requestFullscreen?.();
-      else document.exitFullscreen?.();
-    },
-    regenerate: ({ materialId: mid, layout: lo, filter: fi } = {}) => {
-      if (mid) setRawGraph(sampleGraph(mid));
-      if (typeof lo === "string") {
-        // just to trigger re-layout from parent also
-      }
-      if (typeof fi === "string") {
-        // parent already sets filter state; here no-op
-      }
-      // reset transform
-      setScale(1);
-      setTx(0);
-      setTy(0);
-    },
-  }));
+      setVp({
+        w: el.clientWidth || 1200,
+        h: el.clientHeight || (size?.h ?? DEFAULT_SIZE.h),
+      });
+      chartRef.current?.resize();
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [size?.h]);
 
-  // colors
-  const fillOf = (t) =>
-    t === "root"
-      ? (colors && colors.root) || "#3B82F6"
-      : t === "concept"
-      ? (colors && colors.concept) || "#06B6D4"
-      : t === "entity"
-      ? (colors && colors.entity) || "#F59E0B"
-      : (colors && colors.relation) || "#EF4444";
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+      try {
+        chartRef.current?.dispose?.();
+      } catch {}
+      chartRef.current = null;
+    };
+  }, []);
+
+  useImperativeHandle(ref, () => {
+    const api = {};
+
+    const fns = [
+      "zoomIn",
+      "zoomOut",
+      "resetView",
+      "toggleFullscreen",
+      "regenerate",
+    ];
+
+    fns.forEach((fn) => {
+      api[fn] = (...args) => {
+        if (fn === "zoomIn") {
+          const ch = chartRef.current;
+          if (!ch) return;
+          const w = ch.getWidth(),
+            h = ch.getHeight();
+          ch.dispatchAction({
+            type: "graphRoam",
+            zoom: 1.15,
+            origin: [w / 2, h / 2],
+          });
+        } else if (fn === "zoomOut") {
+          const ch = chartRef.current;
+          if (!ch) return;
+          const w = ch.getWidth(),
+            h = ch.getHeight();
+          ch.dispatchAction({
+            type: "graphRoam",
+            zoom: 0.85,
+            origin: [w / 2, h / 2],
+          });
+        } else if (fn === "resetView") {
+          if (chartRef.current) fitGraphToView(chartRef.current);
+        } else if (fn === "toggleFullscreen") {
+          const el = containerRef.current;
+          if (!el) return;
+          if (!document.fullscreenElement) el.requestFullscreen?.();
+          else document.exitFullscreen?.();
+          setTimeout(() => chartRef.current?.resize(), 200);
+        } else if (fn === "regenerate") {
+          // hook point
+        }
+      };
+    });
+
+    return api;
+  });
+
+  const outerStyle = {
+    position: "relative",
+    width: "100%",
+    height: size?.h ?? DEFAULT_SIZE.h,
+    display: "grid",
+    placeItems: "center",
+    overflow: "hidden",
+    background: "#f8fafc",
+  };
+
+  const Skeleton = () => (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "grid",
+        placeItems: "center",
+        background:
+          "repeating-linear-gradient(90deg,#f1f5f9,#f1f5f9 16px,#e2e8f0 16px,#e2e8f0 32px)",
+        maskImage:
+          "radial-gradient(ellipse at center, black 40%, transparent 70%)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse at center, black 40%, transparent 70%)",
+        opacity: 0.75,
+        pointerEvents: "none",
+      }}
+    >
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: 12,
+          background: "#ffffffaa",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+          fontFamily: "system-ui, sans-serif",
+          fontSize: 14,
+          color: "#334155",
+          pointerEvents: "none",
+        }}
+      >
+        Loading graph…
+      </div>
+    </div>
+  );
 
   return (
-    <div
-      ref={wrapRef}
-      className="relative"
-      style={{ height: size.h }}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-    >
-      <svg width="100%" height="100%" viewBox={`0 0 ${size.w} ${size.h}`} className="block">
-        <g transform={`translate(${tx},${ty}) scale(${scale})`}>
-          {/* links */}
-          {(filtered.links || []).map((l, i) => {
-            const A = (filtered.nodes || []).find((n) => n.id === l.source);
-            const B = (filtered.nodes || []).find((n) => n.id === l.target);
-            if (!A || !B) return null;
-            return (
-              <line
-                key={i}
-                x1={A.x}
-                y1={A.y}
-                x2={B.x}
-                y2={B.y}
-                stroke="#CFD8FF"
-                strokeWidth="2"
-              />
-            );
-          })}
+    <div ref={containerRef} id="graph-viewport" style={outerStyle}>
+      <AnimatePresence initial={false}>
+        {!isReady && (
+          <motion.div
+            key="skeleton"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+          >
+            <Skeleton />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* nodes */}
-          {(filtered.nodes || []).map((n) => {
-            const radius = getR(n.type);
-            const fill = fillOf(n.type);
-            return (
-              <g
-                key={n.id}
-                transform={`translate(${n.x},${n.y})`}
-                onMouseDown={(e) => onMouseDown(n.id, e)}
-                className="cursor-grab"
-              >
-                <circle r={radius} fill={fill} filter="url(#shadow)" />
-                <text
-                  textAnchor="middle"
-                  y={4}
-                  className={
-                    n.type === "root"
-                      ? "text-[13px] font-semibold fill-white"
-                      : "text-[10px] font-medium fill-white"
-                  }
-                  style={{ fontFamily: "Inter, ui-sans-serif, system-ui" }}
-                >
-                  {n.id}
-                </text>
-                {n.type !== "root" && (
-                  <circle
-                    cx={radius - 5}
-                    cy={-(radius - 5)}
-                    r="4"
-                    fill="#2563EB"
-                    stroke="white"
-                    strokeWidth="1"
-                  />
-                )}
-              </g>
-            );
-          })}
-
-          <defs>
-            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.08" />
-            </filter>
-          </defs>
-        </g>
-      </svg>
+      <ReactECharts
+        option={option}
+        style={{ width: "100%", height: "100%" }}
+        notMerge={false}
+        lazyUpdate
+        onChartReady={onChartReady}
+        opts={{
+          renderer: "canvas",
+          devicePixelRatio: Math.min(2, window.devicePixelRatio || 1.5),
+        }}
+      />
     </div>
   );
 });

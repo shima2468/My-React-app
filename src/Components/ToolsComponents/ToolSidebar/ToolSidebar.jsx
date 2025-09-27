@@ -17,7 +17,7 @@ function OptionCard({
       disabled={disabled}
       className={`w-full rounded-xl border p-4 text-left transition ${
         selected
-          ? "border-blue-500 bg-teal-50"
+          ? "border-black bg-gray-100"
           : "border-slate-200 bg-white hover:bg-slate-50"
       } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
     >
@@ -36,7 +36,7 @@ function OptionCard({
                 {rightBadge}
               </span>
             ) : selected ? (
-              <Check className="h-5 w-5 text-blue-500" />
+              <Check className="h-5 w-5 text-black" />
             ) : null}
           </div>
 
@@ -63,8 +63,7 @@ export default function ToolSidebar({
   filters = [],
   selectedFilterId,
   onSelectFilter,
-
-  countsNote, // {visible, total}
+  countsNote,
   showUnapplied = false,
 
   titles = {
@@ -78,7 +77,6 @@ export default function ToolSidebar({
 }) {
   return (
     <aside className="rounded-2xl border border-slate-200 bg-white p-5 space-y-5">
-      {/* Materials */}
       {materials.length > 0 && (
         <section className={loading ? "opacity-60 pointer-events-none" : ""}>
           <h3 className="text-lg font-serif font-semibold text-slate-900">
@@ -101,7 +99,6 @@ export default function ToolSidebar({
         </section>
       )}
 
-      {/* Layouts */}
       {layouts.length > 0 && (
         <section className={loading ? "opacity-60 pointer-events-none" : ""}>
           <h3 className="text-lg font-serif font-semibold text-slate-900">
@@ -123,7 +120,6 @@ export default function ToolSidebar({
         </section>
       )}
 
-      {/* Filters */}
       {filters.length > 0 && (
         <section className={loading ? "opacity-60 pointer-events-none" : ""}>
           <h3 className="text-lg font-serif font-semibold text-slate-900">
@@ -161,8 +157,6 @@ export default function ToolSidebar({
           )}
         </section>
       )}
-
-      {/* Generate */}
       {onGenerate && (
         <div className="sticky bottom-0 pt-3 bg-white">
           <button
@@ -171,7 +165,7 @@ export default function ToolSidebar({
             className={`w-full rounded-xl text-white py-3 font-medium inline-flex items-center justify-center gap-2 ${
               loading
                 ? "bg-slate-300 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"
+                : "bg-gray-300 hover:bg-gray-500"
             }`}
           >
             {loading ? (

@@ -1,4 +1,4 @@
-// src/assets/Components/StudyMaterialsUploader/StudyMaterialsUploader.jsx
+
 import { useRef, useState, useEffect } from "react";
 import { Upload, X, FileText } from "lucide-react";
 

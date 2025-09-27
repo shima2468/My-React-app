@@ -7,9 +7,11 @@ import {
   LoadingOverlay,
   ToolSidebar,
 } from "@/Components";
-import { MindMapCanvas } from "../../../Components";
+import MindMapCanvas from "../../../Components/ToolsComponents/Graph/MindMapCanvas";
 
-const SIZE = { w: 980, h: 520 };
+
+// مساحة العرض (الارتفاع فقط مهم والـعرض يأخذ عرض الكارد)
+const SIZE = { w: 0, h: 520 };
 
 const MATERIALS = [
   { id: "psy", name: "Introduction to Psychology.pdf", size: "2.4 MB" },
@@ -17,9 +19,8 @@ const MATERIALS = [
 ];
 
 export default function MindMapsPage() {
-  // --------- State ---------
   const [material, setMaterial] = useState(MATERIALS[0]);
-  const [styleId, setStyleId] = useState("radial");
+  const [styleId, setStyleId] = useState("radial");      // "radial" | "hierarchical" | "organic"
   const [pendingStyle, setPendingStyle] = useState("radial");
 
   const [loading, setLoading] = useState(false);
@@ -29,21 +30,9 @@ export default function MindMapsPage() {
 
   const styleOptions = useMemo(
     () => [
-      {
-        id: "radial",
-        title: "Radial",
-        desc: "Central topic with branches radiating outward",
-      },
-      {
-        id: "hierarchical",
-        title: "Hierarchical",
-        desc: "Tree-like structure with clear levels",
-      },
-      {
-        id: "organic",
-        title: "Organic",
-        desc: "Natural, flowing connections between concepts",
-      },
+      { id: "radial", title: "Radial", desc: "Central topic with branches radiating outward" },
+      { id: "hierarchical", title: "Hierarchical", desc: "Tree-like structure with clear levels" },
+      { id: "organic", title: "Organic", desc: "Natural, force-directed layout" },
     ],
     []
   );
@@ -53,7 +42,7 @@ export default function MindMapsPage() {
   const runGenerate = async () => {
     if (!canGenerate) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 350));
     setStyleId(pendingStyle);
     setHasMap(true);
     canvasRef.current?.regenerate?.({
@@ -71,15 +60,14 @@ export default function MindMapsPage() {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6">
+      {/* LEFT: Sidebar */}
       <ToolSidebar
         loading={loading}
         onGenerate={runGenerate}
         generateLabel="Generate Mind Map"
         materials={MATERIALS.map((m) => ({ ...m, icon: FileText }))}
         selectedMaterialId={material.id}
-        onSelectMaterial={(id) =>
-          setMaterial(MATERIALS.find((m) => m.id === id))
-        }
+        onSelectMaterial={(id) => setMaterial(MATERIALS.find((m) => m.id === id))}
         layouts={styleOptions}
         selectedLayoutId={pendingStyle}
         onSelectLayout={setPendingStyle}
@@ -91,7 +79,7 @@ export default function MindMapsPage() {
         generateDisabled={!canGenerate}
       />
 
-      {/* RIGHT: اللوحة + الكنترولز بنفس بنية ToolPanel */}
+      {/* RIGHT: اللوحة + الكنترولز */}
       <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         <ToolPanel
           title="Mind Map"
@@ -104,32 +92,16 @@ export default function MindMapsPage() {
             <>
               {hasMap && (
                 <>
-                  <IconButton
-                    title="Zoom in"
-                    onClick={zoomIn}
-                    disabled={loading}
-                  >
+                  <IconButton title="Zoom in" onClick={zoomIn} disabled={loading}>
                     <ZoomIn className="h-4 w-4" />
                   </IconButton>
-                  <IconButton
-                    title="Zoom out"
-                    onClick={zoomOut}
-                    disabled={loading}
-                  >
+                  <IconButton title="Zoom out" onClick={zoomOut} disabled={loading}>
                     <ZoomOut className="h-4 w-4" />
                   </IconButton>
-                  <IconButton
-                    title="Reset view"
-                    onClick={resetView}
-                    disabled={loading}
-                  >
+                  <IconButton title="Reset view" onClick={resetView} disabled={loading}>
                     <RefreshCw className="h-4 w-4" />
                   </IconButton>
-                  <IconButton
-                    title="Fullscreen"
-                    onClick={toggleFullscreen}
-                    disabled={loading}
-                  >
+                  <IconButton title="Fullscreen" onClick={toggleFullscreen} disabled={loading}>
                     <Maximize2 className="h-4 w-4" />
                   </IconButton>
                 </>
@@ -137,7 +109,6 @@ export default function MindMapsPage() {
             </>
           }
         >
-          {/* نفس ارتفاع/مساحة المحتوى الموجودة بالسامرَيزر */}
           <div className="relative min-h-[360px] p-4">
             <LoadingOverlay show={loading} text="Generating your mind map…" />
 
@@ -159,22 +130,19 @@ export default function MindMapsPage() {
               <div className="mt-1">
                 <div className="mb-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-2.5 py-0.5 text-[11px] text-slate-700">
-                    {styleId} mind map
-                    <span className="text-slate-400">•</span>
+                    {styleId} mind map <span className="text-slate-400">•</span>
                     <span className="text-slate-500">Generated just now</span>
                   </span>
                 </div>
 
                 <div className="relative bg-slate-50 rounded-xl border border-slate-200">
-                  <div
-                    style={{ height: SIZE.h }}
-                    className="rounded-xl overflow-hidden"
-                  >
+                  <div style={{ height: SIZE.h }} className="rounded-xl overflow-hidden">
                     <MindMapCanvas
                       ref={canvasRef}
                       size={SIZE}
                       materialId={material.id}
                       styleId={styleId}
+                      stagePadding={0.12} // صغّري/كبّري مساحة الرسم نفسها
                     />
                   </div>
                 </div>

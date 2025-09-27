@@ -1,4 +1,3 @@
-// src/assets/Components/ToolsUI/Graph/graphConfig.js
 export const SIZE = { w: 880, h: 460 };
 
 export const R = { root:50, concept: 30, entity: 30, relation: 22 };
