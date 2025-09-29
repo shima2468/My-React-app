@@ -1,14 +1,7 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { FileText, ZoomIn, ZoomOut, RefreshCw, Maximize2 } from "lucide-react";
-
-import {
-  IconButton,
-  ToolPanel,
-  Legend,
-  LoadingOverlay,
-  ToolSidebar,
-} from "@/Components";
-
+import { useNavigate } from "react-router-dom";
+import { IconButton, ToolPanel, Legend, LoadingOverlay, ToolSidebar } from "@/Components";
 import GraphCanvas, { GRAPH_COLORS } from "@/Components/ToolsComponents/Graph/GraphCanvas.jsx";
 
 const SIZE = { w: 0, h: 620 };
@@ -20,16 +13,14 @@ const MATERIALS = [
 
 export default function KnowledgeGraphPage() {
   const [material, setMaterial] = useState(MATERIALS[0]);
-  const [layout, setLayout] = useState("hier"); // force | circular | hier
+  const [layout, setLayout] = useState("hier");
   const [filter, setFilter] = useState("All");
-
   const [pendingLayout, setPendingLayout] = useState("hier");
   const [pendingFilter, setPendingFilter] = useState("All");
-
   const [loading, setLoading] = useState(false);
   const [hasGraph, setHasGraph] = useState(false);
-
   const canvasRef = useRef(null);
+  const navigate = useNavigate();
 
   const layoutOptions = useMemo(
     () => [
@@ -59,6 +50,21 @@ export default function KnowledgeGraphPage() {
       filter: pendingFilter,
     });
     setLoading(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      try { canvasRef.current?.destroy?.(); } catch {}
+      try { window.speechSynthesis?.cancel?.(); } catch {}
+      try { document.exitFullscreen?.(); } catch {}
+    };
+  }, []);
+
+  const goTo = (path) => {
+    try { canvasRef.current?.destroy?.(); } catch {}
+    try { window.speechSynthesis?.cancel?.(); } catch {}
+    try { document.exitFullscreen?.(); } catch {}
+    navigate(path);
   };
 
   const zoomIn = () => canvasRef.current?.zoomIn?.();
@@ -99,6 +105,8 @@ export default function KnowledgeGraphPage() {
               ? `Interactive ${layout === "force" ? "force" : layout === "circular" ? "circular" : "hierarchical"} knowledge graph`
               : "Select a material, layout and filter, then click generate"
           }
+          backToLabel="Back to Tools"
+          onBack={() => goTo("/dashboard/tools")}
           actions={
             <>
               {hasGraph && (
@@ -157,6 +165,7 @@ export default function KnowledgeGraphPage() {
 
                   <div style={{ height: SIZE.h }} className="rounded-xl overflow-hidden">
                     <GraphCanvas
+                      key={`${material.id}-${layout}-${filter}`}
                       ref={canvasRef}
                       size={SIZE}
                       materialId={material.id}

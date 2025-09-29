@@ -1,4 +1,3 @@
-// src/assets/Components/StudyGoals/StudyGoals.jsx
 import { Plus } from "lucide-react";
 
 const defaultGoals = [

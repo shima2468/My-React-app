@@ -1,4 +1,3 @@
-// src/assets/Components/Overview/StatsRow.jsx
 import { FileText, BookOpen, Brain, Bolt, Clock3 } from "lucide-react";
 
 export default function StatsRow({

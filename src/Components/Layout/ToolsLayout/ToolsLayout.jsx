@@ -1,4 +1,3 @@
-// ToolsLayout.jsx
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { ToolHeader } from "../..";
 

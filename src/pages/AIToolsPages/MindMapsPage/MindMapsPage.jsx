@@ -10,7 +10,7 @@ import {
 import MindMapCanvas from "../../../Components/ToolsComponents/Graph/MindMapCanvas";
 
 
-// مساحة العرض (الارتفاع فقط مهم والـعرض يأخذ عرض الكارد)
+
 const SIZE = { w: 0, h: 520 };
 
 const MATERIALS = [
@@ -20,7 +20,7 @@ const MATERIALS = [
 
 export default function MindMapsPage() {
   const [material, setMaterial] = useState(MATERIALS[0]);
-  const [styleId, setStyleId] = useState("radial");      // "radial" | "hierarchical" | "organic"
+  const [styleId, setStyleId] = useState("radial");     
   const [pendingStyle, setPendingStyle] = useState("radial");
 
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ export default function MindMapsPage() {
     setLoading(false);
   };
 
-  // أدوات التحكّم
+
   const zoomIn = () => canvasRef.current?.zoomIn?.();
   const zoomOut = () => canvasRef.current?.zoomOut?.();
   const resetView = () => canvasRef.current?.resetView?.();
@@ -60,7 +60,6 @@ export default function MindMapsPage() {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6">
-      {/* LEFT: Sidebar */}
       <ToolSidebar
         loading={loading}
         onGenerate={runGenerate}
@@ -79,7 +78,7 @@ export default function MindMapsPage() {
         generateDisabled={!canGenerate}
       />
 
-      {/* RIGHT: اللوحة + الكنترولز */}
+
       <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         <ToolPanel
           title="Mind Map"
@@ -142,7 +141,7 @@ export default function MindMapsPage() {
                       size={SIZE}
                       materialId={material.id}
                       styleId={styleId}
-                      stagePadding={0.12} // صغّري/كبّري مساحة الرسم نفسها
+                      stagePadding={0.12} 
                     />
                   </div>
                 </div>

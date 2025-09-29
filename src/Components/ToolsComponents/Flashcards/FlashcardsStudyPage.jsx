@@ -1,4 +1,4 @@
-// src/assets/Components/ToolsUI/Flashcards/FlashcardsStudyPage.jsx
+
 import React, { useMemo, useState } from "react";
 import { ArrowLeft, X, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -37,7 +37,7 @@ export default function FlashcardsStudyPage({ deck: deckProp, onClose }) {
 
   return (
     <div className="space-y-6">
-      {/* الشريط العلوي */}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button

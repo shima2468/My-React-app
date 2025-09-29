@@ -1,4 +1,3 @@
-// src/assets/Components/RecentActivity/RecentActivity.jsx
 import { FileText, Share2, Zap, Brain } from "lucide-react";
 
 const ICONS = {

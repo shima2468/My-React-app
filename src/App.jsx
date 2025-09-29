@@ -10,6 +10,7 @@ import {
   KnowledgeGraphPage,
   QuizGeneratorPage,
   FlashcardsPage,
+  VoiceModePage,
 } from "./pages";
 import { AuthLayout, DashboardLayout, ToolsLayout } from "./Components";
 
@@ -43,6 +44,7 @@ const router = createBrowserRouter([
               { path: "knowledge-graph", element: <KnowledgeGraphPage /> },
               { path: "quiz-generator", element: <QuizGeneratorPage /> },
               { path: "flashcards", element: <FlashcardsPage /> },
+              { path: "voice-mode", element: <VoiceModePage /> },
             ],
           },
         ],

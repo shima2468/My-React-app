@@ -1,4 +1,3 @@
-// src/assets/Components/Header/Header.jsx
 export default function Header({
   title = "Welcome back, Student!",
   subtitle = "Ready to supercharge your studying with AI-powered tools?",

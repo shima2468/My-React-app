@@ -1,4 +1,3 @@
-
 import React, {
   useMemo,
   useRef,
@@ -12,36 +11,28 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const DEFAULT_SIZE = { w: 1200, h: 560 };
 
-
 const DEFAULT_COLORS = {
-  root: "#111827", 
-  concept: "#374151",
-  entity: "#9CA3AF", 
-  relation: "#6B7280", 
-  edgeNeutral: "#CBD5E1", 
+  root: "#000000",   // black
+  concept: "#1F2937",// gray-800
+  entity: "#E5E7EB", // gray-200 (فاتح للنص الداكن)
+  relation: "#4B5563",// gray-600
+  edgeNeutral: "#D1D5DB", // gray-300 (حواف محايدة)
 };
 
 
 export const GRAPH_COLORS = DEFAULT_COLORS;
 
-
 const H = { root: 66, concept: 48, entity: 44, relation: 42 };
-
-
-const FONT_SCALE = 0.9;
-
-
 const LABEL = {
   base: 13,
-  scale: 1.0, 
-  hierScale: 0.9, 
+  scale: 1.0,
+  hierScale: 0.9,
   byType: { root: 1.35, concept: 1.12, entity: 1.0, relation: 1.0 },
   min: 12,
   max: 34,
 };
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
-
 const labelPx = (type, k, isHier) =>
   clamp(
     Math.round(
@@ -54,16 +45,14 @@ const labelPx = (type, k, isHier) =>
     LABEL.max
   );
 
-
 const HIER_STYLE = {
-  nodeGap: 80, 
+  nodeGap: 80,
   layerGap: 400,
   labelMin: LABEL.min,
   borderWidth: 2,
   shadowBlur: 10,
   siblingSpacer: 220,
 };
-
 
 const short = (s, n = 20) => (s?.length > n ? s.slice(0, n - 1) + "..." : s);
 
@@ -75,7 +64,6 @@ function normalizeLayout(v = "") {
   if (["hier", "hierarchical", "tree"].includes(s)) return "hierarchical";
   return "force";
 }
-
 
 function sampleGraph(materialId) {
   if (materialId === "bio") {
@@ -159,7 +147,6 @@ function sampleGraph(materialId) {
   };
 }
 
-// ===== Helpers =====
 const colorForType = (t, palette) =>
   t === "root"
     ? palette.root
@@ -171,9 +158,7 @@ const colorForType = (t, palette) =>
 
 const labelColorForType = (t) => (t === "entity" ? "#0f172a" : "#ffffff");
 
-
 function boxSizeByType(name = "", type = "entity", mode = "generic", k = 1) {
-
   const per =
     mode === "hier"
       ? type === "root"
@@ -182,7 +167,6 @@ function boxSizeByType(name = "", type = "entity", mode = "generic", k = 1) {
         ? 8.6
         : 8.0
       : 8.0;
-
   const pad =
     mode === "hier"
       ? type === "root"
@@ -191,65 +175,32 @@ function boxSizeByType(name = "", type = "entity", mode = "generic", k = 1) {
         ? 26
         : 34
       : 20;
-
   const bounds =
     mode === "hier"
-      ? {
-          root: [100, 180],
-          concept: [40, 100],
-          entity: [10, 70],
-          relation: [60, 90],
-        }
-      : {
-
-          root: [140, 200],
-          concept: [110, 170],
-          entity: [110, 160],
-          relation: [110, 160],
-        };
-
+      ? { root: [100, 180], concept: [40, 100], entity: [10, 70], relation: [60, 90] }
+      : { root: [140, 200], concept: [110, 170], entity: [110, 160], relation: [110, 160] };
   const [minW, maxW] = bounds[type] || [96, 128];
   const w = clamp(((name?.length || 0) * per + pad) * k, minW * k, maxW * k);
-
-  const baseH =
-    type === "root"
-      ? H.root
-      : type === "concept"
-      ? H.concept
-      : type === "relation"
-      ? H.relation
-      : H.entity;
-
+  const baseH = type === "root" ? H.root : type === "concept" ? H.concept : type === "relation" ? H.relation : H.entity;
   const h = Math.round((mode === "hier" ? baseH * 1.08 : baseH) * k);
   return [Math.round(w), h];
 }
 
-
 function toTreeData(graph, colors, trim = true, k = 1) {
   const palette = colors || DEFAULT_COLORS;
-  const byId = Object.fromEntries(
-    (graph.nodes || []).map((n) => [n.id, { ...n, children: [] }])
-  );
+  const byId = Object.fromEntries((graph.nodes || []).map((n) => [n.id, { ...n, children: [] }]));
   (graph.links || []).forEach((l) => {
-    if (byId[l.source] && byId[l.target])
-      byId[l.source].children.push(byId[l.target]);
+    if (byId[l.source] && byId[l.target]) byId[l.source].children.push(byId[l.target]);
   });
-  const root =
-    (graph.nodes || []).find((n) => n.type === "root") ||
-    (graph.nodes || [])[0];
-
+  const root = (graph.nodes || []).find((n) => n.type === "root") || (graph.nodes || [])[0];
 
   const makeSpacer = () => ({
-    name: " ", 
+    name: " ",
     value: 0.0001,
     type: "spacer",
     symbol: "roundRect",
     symbolSize: [1, 1],
-    itemStyle: {
-      color: "transparent",
-      borderColor: "transparent",
-      borderWidth: 0,
-    },
+    itemStyle: { color: "transparent", borderColor: "transparent", borderWidth: 0 },
     label: {
       show: true,
       position: "inside",
@@ -267,7 +218,6 @@ function toTreeData(graph, colors, trim = true, k = 1) {
     const name = trim ? short(n.id) : n.id;
     const type = n.type || "entity";
     const [bw, bh] = boxSizeByType(name, type, "hier", k);
-
     const node = {
       name,
       value: 1,
@@ -286,12 +236,9 @@ function toTreeData(graph, colors, trim = true, k = 1) {
         position: "inside",
         color: labelColorForType(type),
         fontWeight: type === "root" ? 800 : type === "concept" ? 700 : 600,
-
         fontSize: labelPx(type, k, true),
-
         overflow: "truncate",
         ellipsis: "...",
-
         width: Math.max(48, Math.min(bw - 10, 200)),
         align: "center",
         verticalAlign: "middle",
@@ -299,33 +246,25 @@ function toTreeData(graph, colors, trim = true, k = 1) {
       lineStyle: { color: palette.edgeNeutral },
       children: [],
     };
-
-
     const kids = (n.children || []).map(mapNode);
-
-
     const withSpacers = [];
     for (let i = 0; i < kids.length; i++) {
       withSpacers.push(kids[i]);
       if (i < kids.length - 1) withSpacers.push(makeSpacer());
     }
     node.children = withSpacers;
-
     return node;
   };
 
   return [mapNode(byId[root?.id] || root)];
 }
 
-
 function toGraphData(graph, colors, trim, { layout }, k = 1) {
   const palette = colors || DEFAULT_COLORS;
   const nodes = (graph.nodes || []).map((n) => {
     const raw = trim ? short(n.id) : n.id;
     const type = n.type || "entity";
-
     const [gw, gh] = boxSizeByType(raw, type, "generic", k);
-
     return {
       id: n.id,
       name: raw,
@@ -373,7 +312,6 @@ function toGraphData(graph, colors, trim, { layout }, k = 1) {
   return { nodes, links };
 }
 
-
 function computeScaleFactor(vw, vh, nodeCount) {
   const minDim = Math.max(320, Math.min(vw, vh));
   const base = clamp(minDim / 900, 0.78, 1.25);
@@ -382,44 +320,35 @@ function computeScaleFactor(vw, vh, nodeCount) {
 }
 
 function sortForCircle(nodes) {
-  const rank = (t) =>
-    t === "root" ? 0 : t === "concept" ? 1 : t === "entity" ? 2 : 3;
-
+  const rank = (t) => (t === "root" ? 0 : t === "concept" ? 1 : t === "entity" ? 2 : 3);
   return [...nodes].sort((a, b) => {
-    const ra = rank(a.category),
-      rb = rank(b.category);
+    const ra = rank(a.category), rb = rank(b.category);
     if (ra !== rb) return ra - rb;
     return (a.name || "").localeCompare(b.name || "");
   });
 }
-
 
 function placeCircular(nodes, w, h, padL, padR, padT, padB) {
   const areaW = Math.max(1, w - padL - padR);
   const areaH = Math.max(1, h - padT - padB);
   const cx = padL + areaW / 2;
   const cy = padT + areaH / 2;
-
   const ordered = sortForCircle(nodes);
   const N = ordered.length || 1;
-
   const avgW =
     ordered.reduce(
       (s, n) => s + (Array.isArray(n.symbolSize) ? n.symbolSize[0] : 40),
       0
     ) / N;
-
   const needR = ((avgW + 10) * N) / (2 * Math.PI);
   const maxR = Math.max(60, Math.min(areaW, areaH) / 2);
   const R = clamp(needR * 1.2, 80, maxR * 0.95);
-
-  const start = -Math.PI / 2; 
+  const start = -Math.PI / 2;
   return ordered.map((n, i) => {
     const th = start + (i * 2 * Math.PI) / N;
     return { ...n, x: cx + R * Math.cos(th), y: cy + R * Math.sin(th) };
   });
 }
-
 
 function fitGraphToView(chart) {
   try {
@@ -430,47 +359,25 @@ function fitGraphToView(chart) {
     const yDim = data.getDimensionIndex("y");
     const pts = [];
     for (let i = 0; i < data.count(); i++) {
-      const x = data.get(xDim, i),
-        y = data.get(yDim, i);
+      const x = data.get(xDim, i), y = data.get(yDim, i);
       if (Number.isFinite(x) && Number.isFinite(y)) pts.push([x, y]);
     }
     if (pts.length < 2) return;
-
-    const xs = pts.map((p) => p[0]),
-      ys = pts.map((p) => p[1]);
-    const minX = Math.min(...xs),
-      maxX = Math.max(...xs);
-    const minY = Math.min(...ys),
-      maxY = Math.max(...ys);
-
-    const width = chart.getWidth(),
-      height = chart.getHeight();
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const width = chart.getWidth(), height = chart.getHeight();
     const padding = 90;
-    const w = Math.max(1, maxX - minX),
-      h = Math.max(1, maxY - minY);
+    const w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
     const scaleX = (width - padding) / w;
     const scaleY = (height - padding) / h;
     const zoom = Math.min(scaleX, scaleY) * 0.9;
-
-    chart.dispatchAction({
-      type: "graphRoam",
-      zoom,
-      origin: [width / 2, height / 2],
-    });
-
-    const cx = (minX + maxX) / 2,
-      cy = (minY + maxY) / 2;
+    chart.dispatchAction({ type: "graphRoam", zoom, origin: [width / 2, height / 2] });
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
     const [px, py] = chart.convertToPixel({ seriesIndex: 0 }, [cx, cy]);
-    chart.dispatchAction({
-      type: "graphRoam",
-      dx: width / 2 - px,
-      dy: height / 2 - py,
-    });
-  } catch {
-
-  }
+    chart.dispatchAction({ type: "graphRoam", dx: width / 2 - px, dy: height / 2 - py });
+  } catch {}
 }
-
 
 const GraphCanvas = forwardRef(function GraphCanvas(
   {
@@ -491,6 +398,11 @@ const GraphCanvas = forwardRef(function GraphCanvas(
   const [isReady, setIsReady] = useState(false);
   const [vp, setVp] = useState({ w: 1200, h: size?.h ?? DEFAULT_SIZE.h });
 
+  const chartRef = useRef(null);
+  const containerRef = useRef(null);
+  const timersRef = useRef([]);
+  const resizeObsRef = useRef(null);
+
   useEffect(() => {
     const nodes = rawGraph.nodes || [];
     onCounts?.({
@@ -501,15 +413,9 @@ const GraphCanvas = forwardRef(function GraphCanvas(
     });
   }, [rawGraph, onCounts]);
 
-
   const filtered = useMemo(() => {
     if (filter === "All") return rawGraph;
-    const t =
-      filter === "Concepts"
-        ? "concept"
-        : filter === "Entities"
-        ? "entity"
-        : "relation";
+    const t = filter === "Concepts" ? "concept" : filter === "Entities" ? "entity" : "relation";
     const keep = new Set(
       (rawGraph.nodes || [])
         .filter((n) => n.type === "root" || n.type === t)
@@ -517,19 +423,13 @@ const GraphCanvas = forwardRef(function GraphCanvas(
     );
     return {
       nodes: (rawGraph.nodes || []).filter((n) => keep.has(n.id)),
-      links: (rawGraph.links || []).filter(
-        (l) => keep.has(l.source) && keep.has(l.target)
-      ),
+      links: (rawGraph.links || []).filter((l) => keep.has(l.source) && keep.has(l.target)),
     };
   }, [rawGraph, filter]);
 
-  useEffect(
-    () => onVisibleCount?.((filtered.nodes || []).length),
-    [filtered, onVisibleCount]
-  );
+  useEffect(() => onVisibleCount?.((filtered.nodes || []).length), [filtered, onVisibleCount]);
 
   const L = normalizeLayout(layout);
-
 
   const padL = stagePadding * vp.w;
   const padR = stagePadding * vp.w;
@@ -539,10 +439,7 @@ const GraphCanvas = forwardRef(function GraphCanvas(
   const pxLeft = Math.round(padL);
   const pxRight = Math.round(padR);
   const pxBottom = Math.round(padB + (L === "hierarchical" ? vp.h * 0.06 : 0));
-  const padPct = `${Math.round(
-    Math.max(0, Math.min(0.49, stagePadding)) * 100
-  )}%`;
-
+  const padPct = `${Math.round(Math.max(0, Math.min(0.49, stagePadding)) * 100)}%`;
 
   const k = useMemo(
     () =>
@@ -553,7 +450,6 @@ const GraphCanvas = forwardRef(function GraphCanvas(
       ),
     [vp, filtered, padL, padR, padT, padB]
   );
-
 
   const option = useMemo(() => {
     if (L === "hierarchical") {
@@ -569,15 +465,12 @@ const GraphCanvas = forwardRef(function GraphCanvas(
             layout: "orthogonal",
             orient: "TB",
             roam: true,
-
             top: pxTop,
             left: pxLeft,
             right: pxRight,
             bottom: pxBottom,
-
             nodeGap: HIER_STYLE.nodeGap,
             layerGap: HIER_STYLE.layerGap,
-
             symbol: "roundRect",
             symbolKeepAspect: true,
             edgeShape: "polyline",
@@ -588,7 +481,6 @@ const GraphCanvas = forwardRef(function GraphCanvas(
               color: colors.edgeNeutral || DEFAULT_COLORS.edgeNeutral,
             },
             labelLayout: { hideOverlap: false, moveOverlap: "shiftX" },
-
             emphasis: {
               focus: "ancestor",
               blurScope: "series",
@@ -624,26 +516,11 @@ const GraphCanvas = forwardRef(function GraphCanvas(
       };
     }
 
-
     const kForNodes = L === "force" ? k * 0.85 : k;
-    const base = toGraphData(
-      filtered,
-      colors,
-      trimLabels,
-      { layout: L },
-      kForNodes
-    );
+    const base = toGraphData(filtered, colors, trimLabels, { layout: L }, kForNodes);
 
     if (L === "circular") {
-      const nodesPos = placeCircular(
-        base.nodes,
-        vp.w,
-        vp.h,
-        padL,
-        padR,
-        padT,
-        padB
-      );
+      const nodesPos = placeCircular(base.nodes, vp.w, vp.h, padL, padR, padT, padB);
       return {
         backgroundColor: "#f8fafc",
         tooltip: { trigger: "item" },
@@ -659,10 +536,7 @@ const GraphCanvas = forwardRef(function GraphCanvas(
             selectedMode: "single",
             focusNodeAdjacency: true,
             emphasis: { focus: "adjacency", blurScope: "series" },
-            blur: {
-              itemStyle: { opacity: 0.12 },
-              lineStyle: { opacity: 0.12 },
-            },
+            blur: { itemStyle: { opacity: 0.12 }, lineStyle: { opacity: 0.12 } },
             animationDuration: 450,
             animationDurationUpdate: 650,
             animationEasing: "cubicInOut",
@@ -672,7 +546,6 @@ const GraphCanvas = forwardRef(function GraphCanvas(
         ],
       };
     }
-
 
     return {
       backgroundColor: "#f8fafc",
@@ -697,12 +570,7 @@ const GraphCanvas = forwardRef(function GraphCanvas(
           focusNodeAdjacency: true,
           emphasis: { focus: "adjacency", blurScope: "series" },
           blur: { itemStyle: { opacity: 0.12 }, lineStyle: { opacity: 0.12 } },
-          force: {
-            edgeLength: [60, 120],
-            repulsion: 200,
-            gravity: 0.06,
-            friction: 0.6,
-          },
+          force: { edgeLength: [60, 120], repulsion: 200, gravity: 0.06, friction: 0.6 },
           animationDuration: 450,
           animationDurationUpdate: 650,
           animationEasing: "cubicInOut",
@@ -731,10 +599,6 @@ const GraphCanvas = forwardRef(function GraphCanvas(
     pxBottom,
   ]);
 
-  const chartRef = useRef(null);
-  const containerRef = useRef(null);
-  const timersRef = useRef([]);
-
   const onChartReady = (chart) => {
     chartRef.current = chart;
     const t1 = setTimeout(() => {
@@ -746,16 +610,13 @@ const GraphCanvas = forwardRef(function GraphCanvas(
   };
 
   useEffect(() => {
-    const t1 = setTimeout(
-      () => chartRef.current && fitGraphToView(chartRef.current),
-      0
-    );
-    const t2 = setTimeout(
-      () => chartRef.current && fitGraphToView(chartRef.current),
-      150
-    );
+    const t1 = setTimeout(() => chartRef.current && fitGraphToView(chartRef.current), 0);
+    const t2 = setTimeout(() => chartRef.current && fitGraphToView(chartRef.current), 150);
     timersRef.current.push(t1, t2);
-    return () => {};
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
   }, [layout, filter, stagePadding, k, vp]);
 
   useEffect(() => {
@@ -769,70 +630,60 @@ const GraphCanvas = forwardRef(function GraphCanvas(
       });
       chartRef.current?.resize();
     });
+    resizeObsRef.current = ro;
     ro.observe(containerRef.current);
-    return () => ro.disconnect();
+    return () => {
+      try { resizeObsRef.current?.disconnect?.(); } catch {}
+      resizeObsRef.current = null;
+    };
   }, [size?.h]);
 
   useEffect(() => {
     return () => {
+      try { document.exitFullscreen?.(); } catch {}
+      try { resizeObsRef.current?.disconnect?.(); } catch {}
+      resizeObsRef.current = null;
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
-      try {
-        chartRef.current?.dispose?.();
-      } catch {}
+      try { chartRef.current?.dispose?.(); } catch {}
       chartRef.current = null;
     };
   }, []);
 
-  useImperativeHandle(ref, () => {
-    const api = {};
-
-    const fns = [
-      "zoomIn",
-      "zoomOut",
-      "resetView",
-      "toggleFullscreen",
-      "regenerate",
-    ];
-
-    fns.forEach((fn) => {
-      api[fn] = (...args) => {
-        if (fn === "zoomIn") {
-          const ch = chartRef.current;
-          if (!ch) return;
-          const w = ch.getWidth(),
-            h = ch.getHeight();
-          ch.dispatchAction({
-            type: "graphRoam",
-            zoom: 1.15,
-            origin: [w / 2, h / 2],
-          });
-        } else if (fn === "zoomOut") {
-          const ch = chartRef.current;
-          if (!ch) return;
-          const w = ch.getWidth(),
-            h = ch.getHeight();
-          ch.dispatchAction({
-            type: "graphRoam",
-            zoom: 0.85,
-            origin: [w / 2, h / 2],
-          });
-        } else if (fn === "resetView") {
-          if (chartRef.current) fitGraphToView(chartRef.current);
-        } else if (fn === "toggleFullscreen") {
-          const el = containerRef.current;
-          if (!el) return;
-          if (!document.fullscreenElement) el.requestFullscreen?.();
-          else document.exitFullscreen?.();
-          setTimeout(() => chartRef.current?.resize(), 200);
-        } else if (fn === "regenerate") {
-          // hook point
-        }
-      };
-    });
-
-    return api;
-  });
+  useImperativeHandle(ref, () => ({
+    zoomIn() {
+      const ch = chartRef.current;
+      if (!ch) return;
+      const w = ch.getWidth(), h = ch.getHeight();
+      ch.dispatchAction({ type: "graphRoam", zoom: 1.15, origin: [w / 2, h / 2] });
+    },
+    zoomOut() {
+      const ch = chartRef.current;
+      if (!ch) return;
+      const w = ch.getWidth(), h = ch.getHeight();
+      ch.dispatchAction({ type: "graphRoam", zoom: 0.85, origin: [w / 2, h / 2] });
+    },
+    resetView() {
+      if (chartRef.current) fitGraphToView(chartRef.current);
+    },
+    toggleFullscreen() {
+      const el = containerRef.current;
+      if (!el) return;
+      if (!document.fullscreenElement) el.requestFullscreen?.();
+      else document.exitFullscreen?.();
+      setTimeout(() => chartRef.current?.resize(), 200);
+    },
+    regenerate() {},
+    destroy() {
+      try { document.exitFullscreen?.(); } catch {}
+      try { resizeObsRef.current?.disconnect?.(); } catch {}
+      resizeObsRef.current = null;
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+      try { chartRef.current?.dispose?.(); } catch {}
+      chartRef.current = null;
+    },
+  }));
 
   const outerStyle = {
     position: "relative",
@@ -853,10 +704,8 @@ const GraphCanvas = forwardRef(function GraphCanvas(
         placeItems: "center",
         background:
           "repeating-linear-gradient(90deg,#f1f5f9,#f1f5f9 16px,#e2e8f0 16px,#e2e8f0 32px)",
-        maskImage:
-          "radial-gradient(ellipse at center, black 40%, transparent 70%)",
-        WebkitMaskImage:
-          "radial-gradient(ellipse at center, black 40%, transparent 70%)",
+        maskImage: "radial-gradient(ellipse at center, black 40%, transparent 70%)",
+        WebkitMaskImage: "radial-gradient(ellipse at center, black 40%, transparent 70%)",
         opacity: 0.75,
         pointerEvents: "none",
       }}
@@ -901,10 +750,7 @@ const GraphCanvas = forwardRef(function GraphCanvas(
         notMerge={false}
         lazyUpdate
         onChartReady={onChartReady}
-        opts={{
-          renderer: "canvas",
-          devicePixelRatio: Math.min(2, window.devicePixelRatio || 1.5),
-        }}
+        opts={{ renderer: "canvas", devicePixelRatio: Math.min(2, window.devicePixelRatio || 1.5) }}
       />
     </div>
   );

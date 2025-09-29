@@ -1,4 +1,3 @@
-// src/assets/Components/MaterialsComponents/MaterialsList/MaterialsList.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import StudyMaterialsUploader from "../../StudyMaterialsUploader/StudyMaterialsUploader";
 import { AnimatePresence, motion } from "framer-motion";
@@ -45,7 +44,6 @@ export default function MaterialsList({ exposeAskUpload, onOpenCreate }) {
     [allItems, currentFolderId]
   );
 
-  // خليه يفتح الرافع داخل الكرت الحالي
   const openInlineUploaderHere = (withAutoPick = false) => {
     setInlineUploadFor(currentFolderId ?? "__root__");
     setAutoPick(!!withAutoPick);
@@ -55,14 +53,14 @@ export default function MaterialsList({ exposeAskUpload, onOpenCreate }) {
     setAutoPick(false);
   };
 
-  // خلّي زر Upload في الهيدر يطلب فتح الرافع داخل الكرت الحالي
+
   useEffect(() => {
     if (typeof exposeAskUpload === "function") {
-      exposeAskUpload(() => openInlineUploaderHere(true)); // مع AutoPick
+      exposeAskUpload(() => openInlineUploaderHere(true)); 
     }
   }, [exposeAskUpload, currentFolderId]);
 
-  // إنشاء فولدر (من الليست)
+
   const createFolderHere = () => {
     if (typeof onOpenCreate === "function") { onOpenCreate(); return; }
     const name = prompt("Folder name:");

@@ -65,7 +65,7 @@ export default function ToolSidebar({
   onSelectFilter,
   countsNote,
   showUnapplied = false,
-
+  generateDisabled = false,
   titles = {
     materials: "Select Material",
     materialsSub: "Choose a document to analyze",
@@ -157,28 +157,31 @@ export default function ToolSidebar({
           )}
         </section>
       )}
-      {onGenerate && (
-        <div className="sticky bottom-0 pt-3 bg-white">
-          <button
-            onClick={onGenerate}
-            disabled={loading}
-            className={`w-full rounded-xl text-white py-3 font-medium inline-flex items-center justify-center gap-2 ${
-              loading
-                ? "bg-slate-300 cursor-not-allowed"
-                : "bg-gray-300 hover:bg-gray-500"
-            }`}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generating…
-              </>
-            ) : (
-              generateLabel
-            )}
-          </button>
-        </div>
+{onGenerate && (
+  <div className="sticky bottom-0 pt-3 bg-white">
+    <button
+      onClick={onGenerate}
+      disabled={loading || generateDisabled}
+      className={`w-full rounded-xl text-white py-3 font-medium inline-flex items-center justify-center gap-2
+        ${loading
+          ? "bg-slate-300 cursor-not-allowed"
+          : generateDisabled
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-black hover:bg-gray-800"
+        }`}
+    >
+      {loading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Generating…
+        </>
+      ) : (
+        generateLabel
       )}
+    </button>
+  </div>
+)}
+
     </aside>
   );
 }

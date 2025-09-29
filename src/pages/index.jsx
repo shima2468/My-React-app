@@ -1,11 +1,11 @@
-
 export { default as SignIn } from "./Authentication/Signin/Signin.jsx";
 export { default as SignUp } from "./Authentication/Signup/Signup.jsx";
 export { default as Overview } from "./Overview/Overview.jsx";
 export { default as Materials } from "./Materials/Materials.jsx";
 export { default as AITools } from "./AITools/AITools.jsx";
-export { default as SummarizerPage }     from "./AIToolsPages/SummarizerPage/SummarizerPage.jsx";
-export { default as MindMapsPage }       from "./AIToolsPages/MindMapsPage/MindMapsPage.jsx";
+export { default as SummarizerPage } from "./AIToolsPages/SummarizerPage/SummarizerPage.jsx";
+export { default as MindMapsPage } from "./AIToolsPages/MindMapsPage/MindMapsPage.jsx";
 export { default as KnowledgeGraphPage } from "./AIToolsPages/KnowledgeGraphPage/KnowledgeGraphPage.jsx";
-export { default as QuizGeneratorPage }  from "./AIToolsPages/QuizGeneratorPage/QuizGeneratorPage.jsx";
-export { default as FlashcardsPage }     from "./AIToolsPages/FlashcardsPage/FlashcardsPage.jsx";
+export { default as QuizGeneratorPage } from "./AIToolsPages/QuizGeneratorPage/QuizGeneratorPage.jsx";
+export { default as FlashcardsPage } from "./AIToolsPages/FlashcardsPage/FlashcardsPage.jsx";
+export { default as VoiceModePage } from "./AIToolsPages/VoiceModePage/VoiceModePage.jsx";

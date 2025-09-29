@@ -14,7 +14,6 @@ export default function FlashcardsGeneratePanel({
 }) {
   return (
     <div className="space-y-12">
-      {/* Select Material */}
       <div>
         <h3 className="text-lg font-serif font-semibold text-slate-900">
           Select Study Material

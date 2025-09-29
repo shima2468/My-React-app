@@ -1,4 +1,4 @@
-// src/assets/Components/ToolsUI/Flashcards/FlashcardsList.jsx
+
 import React from "react";
 
 const tagColor = (t) =>
