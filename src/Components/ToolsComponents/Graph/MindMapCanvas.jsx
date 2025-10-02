@@ -1,5 +1,3 @@
-
-
 import React, {
   forwardRef,
   useEffect,
@@ -11,29 +9,30 @@ import React, {
 import ReactECharts from "echarts-for-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-
+/* ============ Sizing & Theme ============ */
 const DEFAULT_SIZE = { w: 980, h: 520 };
 
-
-const DEFAULT_COLORS = {
-  root: "#000000",   // black
-  branch: "#1F2937",// gray-800
-  leaf: "#E5E7EB", // gray-200 (فاتح للنص الداكن)
-  edgeNeutral: "#D1D5DB", // gray-300 (حواف محايدة)
+const COLORS = {
+  root: "#4DD0C8",   // turquoise
+  branch: "#42A5F5", // blue
+  leaf: "#FFD54F",   // warm yellow
+  edgeNeutral: "#6AA6F6", // soft blue for edges
 };
-
 
 const FONT = 9;
 
-
+// ارتفاعات العقد (راديال/أورجانيك تبقى نفسها)
 const H_ORG = { root: 48, mid: 36, leaf: 32 };
 const H_RAD = { root: 44, mid: 34, leaf: 30 };
 
-const ORGANIC_PAD_MIN = 0.30;
+/* تصغير خاص بالهيراركي فقط */
+const HIER_NODE_SCALE = 0.82;   // صناديق الهيراركي أصغر ~18%
+const ORGANIC_PAD_MIN = 0.3;
 const RADIAL_PAD_DEFAULT = 0.08;
-const HIER_PAD_DEFAULT = 0.08;
+/* تكبير الهوامش في الهيراركي ليبدو أصغر داخل الكانفس */
+const HIER_PAD_DEFAULT = 0.16;
 
-
+/* ============ Demo Data ============ */
 function sampleGraph(materialId) {
   if (materialId === "psy") {
     return {
@@ -57,6 +56,7 @@ function sampleGraph(materialId) {
   };
 }
 
+/* ============ Helpers ============ */
 const short = (s, n = 22) => (s?.length > n ? s.slice(0, n - 1) + "…" : s);
 const normalizeLayout = (v = "") => {
   const s = String(v).toLowerCase().trim();
@@ -66,17 +66,16 @@ const normalizeLayout = (v = "") => {
 };
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
-
+/** قياس صندوق العقدة بحسب العمق ونمط التخطيط */
 function boxSize(name = "", depth = 0, mode = "radial") {
-
   const per = depth === 0 ? 9.0 : depth === 1 ? 8.4 : 8.0;
   const pad = depth === 0 ? 56 : depth === 1 ? 44 : 34;
 
   const bounds = {
     hierarchical: [
-      [120, 168], 
-      [100, 130], 
-      [70, 65],  
+      [96, 138], // root
+      [86, 118], // mid
+      [60, 84],  // leaf  (تم إصلاحها)
     ],
     radial: [
       [110, 160],
@@ -89,7 +88,8 @@ function boxSize(name = "", depth = 0, mode = "radial") {
       [78, 98],
     ],
   };
-  const [minW, maxW] = bounds[mode][depth] || [96, 128];
+
+  const [minW, maxW] = (bounds[mode] && bounds[mode][depth]) || [96, 128];
   const baseW = clamp((name?.length || 0) * per + pad, minW, maxW);
 
   const h =
@@ -105,10 +105,11 @@ function boxSize(name = "", depth = 0, mode = "radial") {
       ? H_ORG.mid
       : H_ORG.leaf;
 
-  return [Math.round(baseW), h];
+  const scale = mode === "hierarchical" ? HIER_NODE_SCALE : 1;
+  return [Math.round(baseW * scale), Math.round(h * scale)];
 }
 
-
+/** يحول الداتا لتخطيط graph (قوة) */
 function toGraphData(mind) {
   const nodes = [];
   const links = [];
@@ -154,6 +155,7 @@ function toGraphData(mind) {
   return { nodes, links };
 }
 
+/** يحول الداتا لتخطيط tree (راديال/هيراركي) */
 function toTreeData(mind, mode) {
   const root = {
     nid: "root",
@@ -163,7 +165,13 @@ function toTreeData(mind, mode) {
     lineStyle: { color: COLORS.edgeNeutral },
     symbol: "roundRect",
     symbolSize: boxSize(mind.root.id, 0, mode),
-    label: { color: "#fff", fontWeight: 700, fontSize: FONT, position: "inside", rotate: 0 },
+    label: {
+      color: "#fff",
+      fontWeight: 700,
+      fontSize: FONT,
+      position: "inside",
+      rotate: 0,
+    },
     children: (mind.branches || []).map((b, i) => ({
       nid: `b${i}`,
       name: short(b.id),
@@ -172,7 +180,13 @@ function toTreeData(mind, mode) {
       lineStyle: { color: b.color },
       symbol: "roundRect",
       symbolSize: boxSize(b.id, 1, mode),
-      label: { color: "#fff", fontWeight: 600, fontSize: FONT - 1, position: "inside", rotate: 0 },
+      label: {
+        color: "#fff",
+        fontWeight: 600,
+        fontSize: FONT - 1,
+        position: "inside",
+        rotate: 0,
+      },
       children: (b.children || []).map((c, j) => ({
         nid: `b${i}-c${j}`,
         name: short(c),
@@ -188,6 +202,7 @@ function toTreeData(mind, mode) {
   return [root];
 }
 
+/** ملاءمة الرسم داخل الكانفس + تصغير إضافي عبر shrink */
 function fitGraphToView(chart, shrink = 0.98) {
   try {
     const series = chart.getModel().getSeriesByIndex(0);
@@ -221,14 +236,9 @@ function fitGraphToView(chart, shrink = 0.98) {
   } catch {}
 }
 
-
+/* ============ Component ============ */
 const MindMapCanvas = forwardRef(function MindMapCanvas(
-  {
-    size = DEFAULT_SIZE,
-    materialId = "psy",
-    styleId = "radial", 
-    stagePadding = 0.18,
-  },
+  { size = DEFAULT_SIZE, materialId = "psy", styleId = "radial", stagePadding = 0.18 },
   ref
 ) {
   const [mind, setMind] = useState(() => sampleGraph(materialId));
@@ -242,15 +252,18 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
 
   const L = normalizeLayout(styleId);
 
-
+  // padding حسب النمط
   const padForLayout =
-    L === "organic" ? Math.max(stagePadding, ORGANIC_PAD_MIN)
-    : L === "radial" ? Math.min(stagePadding, RADIAL_PAD_DEFAULT)
-    : Math.min(stagePadding, HIER_PAD_DEFAULT);
+    L === "organic"
+      ? Math.max(stagePadding, ORGANIC_PAD_MIN)
+      : L === "radial"
+      ? Math.min(stagePadding, RADIAL_PAD_DEFAULT)
+      : Math.min(stagePadding, HIER_PAD_DEFAULT);
 
   const padPct = `${Math.round(Math.max(0, Math.min(0.49, padForLayout)) * 100)}%`;
 
-  const fitShrink = L === "organic" ? 0.88 : L === "hierarchical" ? 0.95 : 0.96;
+  // تقليل الزوم في الهيراركي ليظهر أصغر داخل الكانفس
+  const fitShrink = L === "organic" ? 0.88 : L === "hierarchical" ? 0.82 : 0.96;
 
   const option = useMemo(() => {
     if (L === "organic") {
@@ -258,28 +271,34 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
       return {
         backgroundColor: "#f8fafc",
         tooltip: { trigger: "item" },
-        series: [{
-          id: "main",
-          type: "graph",
-          layout: "force",
-          data: nodes,
-          links,
-          roam: true,
-          top: padPct, left: padPct, right: padPct, bottom: padPct,
-          scaleLimit: { min: 0.05, max: 2.4 },
-          edgeSymbol: ["none", "arrow"],
-          edgeSymbolSize: 8,
-          lineStyle: { color: COLORS.edgeNeutral, width: 1.4, opacity: 0.9 },
-          emphasis: { focus: "adjacency", blurScope: "series" },
-          blur: { itemStyle: { opacity: 0.12 }, lineStyle: { opacity: 0.12 }, label: { opacity: 0.55 } },
-          labelLayout: { hideOverlap: true, moveOverlap: "shiftX" },
-          force: { edgeLength: [70, 110], repulsion: 520, gravity: 0.08, friction: 0.65 },
-          animationDuration: 450,
-          animationDurationUpdate: 650,
-          animationEasing: "cubicInOut",
-          animationEasingUpdate: "cubicInOut",
-          universalTransition: true,
-        }],
+        series: [
+          {
+            id: "main",
+            type: "graph",
+            layout: "force",
+            data: nodes,
+            links,
+            roam: true,
+            top: padPct, left: padPct, right: padPct, bottom: padPct,
+            scaleLimit: { min: 0.05, max: 2.4 },
+            edgeSymbol: ["none", "arrow"],
+            edgeSymbolSize: 8,
+            lineStyle: { color: COLORS.edgeNeutral, width: 1.4, opacity: 0.9 },
+            emphasis: { focus: "adjacency", blurScope: "series" },
+            blur: {
+              itemStyle: { opacity: 0.12 },
+              lineStyle: { opacity: 0.12 },
+              label: { opacity: 0.55 },
+            },
+            labelLayout: { hideOverlap: true, moveOverlap: "shiftX" },
+            force: { edgeLength: [70, 110], repulsion: 520, gravity: 0.08, friction: 0.65 },
+            animationDuration: 450,
+            animationDurationUpdate: 650,
+            animationEasing: "cubicInOut",
+            animationEasingUpdate: "cubicInOut",
+            universalTransition: true,
+          },
+        ],
       };
     }
 
@@ -287,111 +306,110 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
       return {
         backgroundColor: "#f8fafc",
         tooltip: { trigger: "item" },
-        series: [{
+        series: [
+          {
+            id: "main",
+            type: "tree",
+            data: toTreeData(mind, "hierarchical"),
+            layout: "orthogonal",
+            orient: "TB",
+            top: padPct, left: padPct, right: padPct, bottom: padPct,
+            roam: true,
+            edgeShape: "curve",
+            edgeForkPosition: "55%",
+            symbol: "roundRect",
+            symbolKeepAspect: true,
+            // تصغير أحجام العقد ديناميكيًا (مع HIER_NODE_SCALE داخل boxSize)
+            symbolSize: (val, params) => {
+              const depth = (params?.treeAncestors?.length ?? 1) - 1;
+              const name = params?.data?.name ?? "";
+              return boxSize(name, Math.max(0, depth), "hierarchical");
+            },
+            lineStyle: { color: COLORS.edgeNeutral, width: 1.6, opacity: 0.9 },
+            label: {
+              position: "inside",
+              rotate: 0,
+              color: (p) => ((p?.treeAncestors?.length ?? 1) <= 2 ? "#fff" : "#0f172a"),
+              fontWeight: (p) => ((p?.treeAncestors?.length ?? 1) <= 2 ? 600 : 500),
+              fontSize: (p) => ((p?.treeAncestors?.length ?? 1) <= 1 ? FONT : FONT - 1),
+            },
+            labelLayout: { hideOverlap: true },
+            emphasis: {
+              focus: "ancestor",
+              blurScope: "series",
+              lineStyle: { width: 3, opacity: 1 },
+              itemStyle: { shadowBlur: 12, shadowColor: "rgba(15,23,42,0.18)" },
+            },
+            selectedMode: "single",
+            select: {
+              lineStyle: { width: 3.5, opacity: 1, shadowBlur: 10, shadowColor: "rgba(15,23,42,0.25)" },
+              label: { fontWeight: 700 },
+              itemStyle: { shadowBlur: 14, shadowColor: "rgba(15,23,42,0.25)" },
+            },
+            blur: {
+              itemStyle: { opacity: 0.22 },
+              label: { opacity: 0.5 },
+              lineStyle: { opacity: 0.2 },
+            },
+            expandAndCollapse: true,
+            initialTreeDepth: 2,
+            animationDuration: 420,
+            animationDurationUpdate: 650,
+            animationEasing: "cubicInOut",
+            animationEasingUpdate: "cubicInOut",
+            universalTransition: true,
+          },
+        ],
+      };
+    }
+
+    // Radial
+    return {
+      backgroundColor: "#f8fafc",
+      tooltip: { trigger: "item" },
+      series: [
+        {
           id: "main",
           type: "tree",
-          data: toTreeData(mind, "hierarchical"),
-          layout: "orthogonal",
-          orient: "TB",
-          top: padPct, left: padPct, right: padPct, bottom: padPct,
+          data: toTreeData(mind, "radial"),
+          layout: "radial",
           roam: true,
-          edgeShape: "curve",
-          edgeForkPosition: "55%",
+          top: padPct, left: padPct, right: padPct, bottom: padPct,
           symbol: "roundRect",
           symbolKeepAspect: true,
-
-          // حجم ديناميكي (يعطي أوراق أضيق → ما تتداخل)
           symbolSize: (val, params) => {
             const depth = (params?.treeAncestors?.length ?? 1) - 1;
             const name = params?.data?.name ?? "";
-            return boxSize(name, Math.max(0, depth), "hierarchical");
+            return boxSize(name, Math.max(0, depth), "radial");
           },
-
-          lineStyle: { color: COLORS.edgeNeutral, width: 1.6, opacity: 0.9 },
-
+          edgeShape: "curve",
+          lineStyle: { color: COLORS.edgeNeutral, width: 1.8, opacity: 0.95 },
           label: {
             position: "inside",
             rotate: 0,
+            align: "center",
+            verticalAlign: "middle",
             color: (p) => ((p?.treeAncestors?.length ?? 1) <= 2 ? "#fff" : "#0f172a"),
             fontWeight: (p) => ((p?.treeAncestors?.length ?? 1) <= 2 ? 600 : 500),
             fontSize: (p) => ((p?.treeAncestors?.length ?? 1) <= 1 ? FONT : FONT - 1),
           },
+          leaves: { label: { rotate: 0 } },
           labelLayout: { hideOverlap: true },
-
-          emphasis: {
-            focus: "ancestor",
-            blurScope: "series",
-            lineStyle: { width: 3, opacity: 1 },
-            itemStyle: { shadowBlur: 12, shadowColor: "rgba(15,23,42,0.18)" },
-          },
+          emphasis: { focus: "ancestor", blurScope: "series", lineStyle: { width: 3 } },
           selectedMode: "single",
-          select: {
-            lineStyle: { width: 3.5, opacity: 1, shadowBlur: 10, shadowColor: "rgba(15,23,42,0.25)" },
-            label: { fontWeight: 700 },
-            itemStyle: { shadowBlur: 14, shadowColor: "rgba(15,23,42,0.25)" },
-          },
-          blur: {
-            itemStyle: { opacity: 0.22 },
-            label: { opacity: 0.5 },
-            lineStyle: { opacity: 0.2 },
-          },
-
+          select: { lineStyle: { width: 3.5, opacity: 1, shadowBlur: 10, shadowColor: "rgba(15,23,42,0.25)" } },
+          blur: { itemStyle: { opacity: 0.22 }, label: { opacity: 0.5 } },
           expandAndCollapse: true,
-          initialTreeDepth: 2,
+          initialTreeDepth: 3,
           animationDuration: 420,
           animationDurationUpdate: 650,
           animationEasing: "cubicInOut",
           animationEasingUpdate: "cubicInOut",
           universalTransition: true,
-        }],
-      };
-    }
-
-    return {
-      backgroundColor: "#f8fafc",
-      tooltip: { trigger: "item" },
-      series: [{
-        id: "main",
-        type: "tree",
-        data: toTreeData(mind, "radial"),
-        layout: "radial",
-        roam: true,
-        top: padPct, left: padPct, right: padPct, bottom: padPct,
-        symbol: "roundRect",
-        symbolKeepAspect: true,
-        symbolSize: (val, params) => {
-          const depth = (params?.treeAncestors?.length ?? 1) - 1;
-          const name = params?.data?.name ?? "";
-          return boxSize(name, Math.max(0, depth), "radial");
         },
-        edgeShape: "curve", 
-        lineStyle: { color: COLORS.edgeNeutral, width: 1.8, opacity: 0.95 },
-        label: {
-          position: "inside",
-          rotate: 0,
-          align: "center",
-          verticalAlign: "middle",
-          color: (p) => ((p?.treeAncestors?.length ?? 1) <= 2 ? "#fff" : "#0f172a"),
-          fontWeight: (p) => ((p?.treeAncestors?.length ?? 1) <= 2 ? 600 : 500),
-          fontSize: (p) => ((p?.treeAncestors?.length ?? 1) <= 1 ? FONT : FONT - 1),
-        },
-        leaves: { label: { rotate: 0 } },
-        labelLayout: { hideOverlap: true },
-        emphasis: { focus: "ancestor", blurScope: "series", lineStyle: { width: 3 } },
-        selectedMode: "single",
-        select: { lineStyle: { width: 3.5, opacity: 1, shadowBlur: 10, shadowColor: "rgba(15,23,42,0.25)" } },
-        blur: { itemStyle: { opacity: 0.22 }, label: { opacity: 0.5 } },
-        expandAndCollapse: true,
-        initialTreeDepth: 3,
-        animationDuration: 420,
-        animationDurationUpdate: 650,
-        animationEasing: "cubicInOut",
-        animationEasingUpdate: "cubicInOut",
-        universalTransition: true,
-      }],
+      ],
     };
   }, [L, mind, padPct]);
-
 
   const onChartReady = (chart) => {
     chartRef.current = chart;
@@ -411,14 +429,12 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
     timersRef.current.push(t1);
   };
 
-
   useEffect(() => {
     autoFitRef.current = true;
     const t1 = setTimeout(() => chartRef.current && fitGraphToView(chartRef.current, fitShrink), 0);
     const t2 = setTimeout(() => chartRef.current && fitGraphToView(chartRef.current, fitShrink), 150);
     timersRef.current.push(t1, t2);
   }, [styleId, materialId, padPct]);
-
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -432,7 +448,6 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
     return () => ro.disconnect();
   }, []);
 
-
   useEffect(() => {
     return () => {
       timersRef.current.forEach(clearTimeout);
@@ -441,7 +456,6 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
       chartRef.current = null;
     };
   }, []);
-
 
   useImperativeHandle(ref, () => ({
     regenerate: ({ materialId: mid } = {}) => {
@@ -493,7 +507,8 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
         background:
           "repeating-linear-gradient(90deg,#f1f5f9,#f1f5f9 16px,#e2e8f0 16px,#e2e8f0 32px)",
         maskImage: "radial-gradient(ellipse at center, black 40%, transparent 70%)",
-        WebkitMaskImage: "radial-gradient(ellipse at center, black 40%, transparent 70%)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse at center, black 40%, transparent 70%)",
         opacity: 0.75,
         pointerEvents: "none",
       }}
@@ -535,8 +550,7 @@ const MindMapCanvas = forwardRef(function MindMapCanvas(
       <motion.div
         key={`mind-${materialId}-${L}`}
         initial={false}
-        animate={isReady ? { opacity: 1, scale: 1, filter: "blur(0px)" }
-                         : { opacity: 0, scale: 0.97, filter: "blur(2px)" }}
+        animate={isReady ? { opacity: 1, scale: 1, filter: "blur(0px)" } : { opacity: 0, scale: 0.97, filter: "blur(2px)" }}
         transition={{ duration: 0.38, ease: [0.4, 0.0, 0.2, 1] }}
         style={{ width: "100%", height: "100%", pointerEvents: isReady ? "auto" : "none" }}
       >

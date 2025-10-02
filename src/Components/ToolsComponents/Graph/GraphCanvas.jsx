@@ -12,11 +12,11 @@ import { motion, AnimatePresence } from "framer-motion";
 const DEFAULT_SIZE = { w: 1200, h: 560 };
 
 const DEFAULT_COLORS = {
-  root: "#000000",   // black
-  concept: "#1F2937",// gray-800
-  entity: "#E5E7EB", // gray-200 (فاتح للنص الداكن)
-  relation: "#4B5563",// gray-600
-  edgeNeutral: "#D1D5DB", // gray-300 (حواف محايدة)
+  root: "#4DD0C8",   
+  concept: "#42A5F5",
+  entity: "#FFD54F",
+  relation: "#FF8A65",
+  edgeNeutral: "#D1D5DB", 
 };
 
 

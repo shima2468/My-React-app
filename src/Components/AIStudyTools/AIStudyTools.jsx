@@ -18,7 +18,7 @@ const defaultTools = [
     desc: "Get concise summaries of your study materials",
     icon: BookOpen,
     to: "/dashboard/tools/summarizer",
-    color: "bg-gray-900",
+    color: "bg-[#06B6D4]",
     category: "Reading",
   },
   {
@@ -26,7 +26,7 @@ const defaultTools = [
     desc: "Visualize concepts and their relationships",
     icon: GitBranch,
     to: "/dashboard/tools/mind-maps",
-    color: "bg-gray-800",
+    color: "bg-[#F59E0B]",
     category: "Visualization",
   },
   {
@@ -34,7 +34,7 @@ const defaultTools = [
     desc: "Explore interconnected topics and ideas",
     icon: Network,
     to: "/dashboard/tools/knowledge-graph",
-    color: "bg-gray-700",
+    color: "bg-[#10B981]",
     category: "Visualization",
   },
   {
@@ -42,7 +42,7 @@ const defaultTools = [
     desc: "Create practice tests from your materials",
     icon: Brain,
     to: "/dashboard/tools/quiz-generator",
-    color: "bg-gray-600",
+    color: "bg-[#EF4444]",
     category: "Practice",
   },
   {
@@ -50,7 +50,7 @@ const defaultTools = [
     desc: "Create interactive flashcards for recall",
     icon: Square,
     to: "/dashboard/tools/flashcards",
-    color: "bg-gray-500",
+    color: "bg-[#06B6D4]",
     category: "Practice",
   },
   {
@@ -58,7 +58,7 @@ const defaultTools = [
     desc: "Record, transcribe, and interact with your",
     icon: Mic,
     to: "/dashboard/tools/voice-mode",
-    color: "bg-black",
+    color: "bg-[#10B981]",
     category: "Reading",
     badge: "New",
   },
